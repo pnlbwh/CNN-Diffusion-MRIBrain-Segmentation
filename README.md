@@ -47,7 +47,7 @@ The proposed networks are designed in the framework of encoder-decoder networks 
 branch generate brain mask
 > 3) Reconstruction Branch - It provides direct feedback to the segmentation and
 complementary branche and expects reasonable predictions from them as input to reconstruct the original input image.
-![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/CompNet%20Arch.png)
+![Screenshot](https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/blob/master/CompNet%20Arch.png)
 
 
 ### Multi View Aggregation step:
