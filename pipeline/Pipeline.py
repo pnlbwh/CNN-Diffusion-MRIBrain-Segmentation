@@ -791,7 +791,7 @@ if __name__ == '__main__':
                 brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], multi_view_mask, case_arr[i], cases_dim[i], view='multi')
                 print "Mask file = ", brain_mask_multi
             
-            #clear(os.path.dirname(brain_mask_multi))
+            clear(os.path.dirname(brain_mask_multi))
 
             #sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
             #coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
@@ -828,12 +828,12 @@ if __name__ == '__main__':
 
             multi_view_mask = multi_view_fast(dwi_mask_sagittal, dwi_mask_coronal, dwi_mask_axial, input_file, rotate_view=rotate_view)
 
-            brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, subject_name, dimensions, view='sagittal')
-            brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, subject_name, dimensions, view='coronal')
-            brain_mask_axial = npy_to_nhdr(b0_normalized, dwi_mask_axial, subject_name, dimensions, view='axial')
+            #brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, subject_name, dimensions, view='sagittal')
+            #brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, subject_name, dimensions, view='coronal')
+            #brain_mask_axial = npy_to_nhdr(b0_normalized, dwi_mask_axial, subject_name, dimensions, view='axial')
             brain_mask_multi = npy_to_nhdr(b0_normalized, multi_view_mask, subject_name, dimensions, view='multi')
 
-            #clear(directory)
+            clear(directory)
             print "Mask file = ", brain_mask_multi
 
         end_t = datetime.datetime.now()
