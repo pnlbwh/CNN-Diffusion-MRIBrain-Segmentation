@@ -17,7 +17,7 @@ CompNet.py
 5)  Re sample nii.gz file to 246 x 246
 6)  Pads the Image adding zeros to 256 x 256
 7)  Normalize the Image by 99th percentile
-8)  Applys Rigid-Body tranformation to standard MNI space using
+8)  Applys Rigid-Body tranformation to standard MNI space
 9)  Neural network brain mask prediction across the 3 principal axis
 10) Performs Multi View Aggregation
 11) Converts npy to nhdr,nrrd,nii,nii.gz
