@@ -3,7 +3,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	09/10/2019
+# Last Updated: 	09/11/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -32,12 +32,12 @@ import os
 import os.path
 from os import path
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress tensor flow message
-# import tensorflow as tf
+import tensorflow as tf
 # if tf.test.is_gpu_available():
-#     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+#     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 # else:
-#     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+#     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 import tensorflow as tf
 import re
 import sys
@@ -79,7 +79,7 @@ SUFFIX_NPY = "npy"
 SUFFIX_TXT = "txt"
 
 
-def predict_mask(input_file, view='default', rotate_view=False):
+def predict_mask(input_file, view='default'):
     """
     Parameters
     ----------
@@ -139,8 +139,6 @@ def predict_mask(input_file, view='default', rotate_view=False):
 
     if input_file.endswith(SUFFIX_NIFTI_GZ):
         x_test = nib.load(input_file).get_data()
-        if rotate_view:
-            x_test = scipy.ndimage.rotate(x_test, 180, axes=(0, 1))
         if view == 'coronal':
             x_test = np.swapaxes(x_test, 0, 1)  # sagittal to coronal view
         elif view == 'axial':
@@ -230,7 +228,7 @@ def multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file):
     return output_file
 
 
-def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file, rotate_view=False):
+def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
     x = np.load(sagittal_SO)
     y = np.load(coronal_SO)
     z = np.load(axial_SO)
@@ -259,8 +257,6 @@ def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file, rotate_view=F
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
     SO = multi_view.astype('float32')
-    if rotate_view:
-        SO = scipy.ndimage.rotate(SO, 180, axes=(0, 1))
     np.save(output_file, SO)
     return output_file
 
@@ -483,9 +479,10 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             output_file = cases_mask_arr[i][:len(cases_mask_arr[i]) - len(SUFFIX_NPY)] + 'nii.gz'
             nib.save(image_predict, output_file)
 
-            print "Applying Inverse transform before downsampling"
+            #print "Applying Inverse transform before downsampling"
 
-            output_file = inverse_transform(output_file, reference[i], omat)
+            output_file_inverseMask = inverse_transform(output_file, reference[i], omat)
+            output_file = reThreshold(output_file_inverseMask)
 
             downsample_file = output_file[:len(output_file) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-downsampled.nii.gz'
             bashCommand_downsample = "ResampleImage 3 " + output_file + " " + downsample_file + " " + dim[i][0] + "x" + \
@@ -525,10 +522,10 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
         output_file = os.path.join(output_dir, output_name)
         nib.save(image_predict, output_file)
 
-        print "Applying Inverse transform before downsampling"
+        #print "Applying Inverse transform before downsampling"
 
-        output_file = inverse_transform(output_file, reference, omat=omat)
-
+        output_file_inverseMask = inverse_transform(output_file, reference, omat=omat)
+        output_file = reThreshold(output_file_inverseMask)
 
         case_name = os.path.basename(output_file)
         downsample_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-downsampled.nii.gz'
@@ -565,8 +562,10 @@ def clear(directory):
     print "Cleaning files ..."
     for filename in os.listdir(directory):
         if filename.startswith('Comp') | filename.endswith(SUFFIX_NPY) | \
-                filename.endswith('_SO.nii.gz') | filename.endswith('downsampled.nii.gz') | filename.endswith('multi-mask.nii.gz'):
-            os.unlink(directory + '/' + filename)
+                filename.endswith('_SO.nii.gz') | filename.endswith('downsampled.nii.gz') | \
+                filename.endswith('-thresholded.nii.gz') | filename.endswith('-inverse.mat') | \
+                filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz'):
+                os.unlink(directory + '/' + filename)
 
 
 def split(cases_file, case_arr, view='default'):
@@ -617,14 +616,14 @@ def rigid_body_trans(b0_nii):
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-transformed.nii.gz'
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
-    reference = '/rfanfs/pnl-zorro/home/sq566/CompNetPipeline/reference/mni256.nii'
+    reference = '/rfanfs/pnl-zorro/home/sq566/CompNetPipeline/reference/dwib0.nii.gz'
 
     #Compute Transformation matrix using flirt
     omat_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '.mat'
     omat_file = os.path.join(os.path.dirname(input_file), omat_name)
 
     trans_matrix = "flirt -in " + input_file +  " -ref " + reference + \
-                   " -omat " + omat_file + " -dof 6 -cost mutualinfo"
+                   " -omat " + omat_file + " -dof 6 -cost normmi"
 
     #print trans_matrix
     output1 = subprocess.check_output(trans_matrix, shell=True)
@@ -668,15 +667,31 @@ def inverse_transform(predicted_mask, reference, omat='default'):
     output1 = subprocess.check_output(inverse, shell=True)
     
     # Apply the inverse transformation to the predicted mask
-    print "omat_rigid = ", omat
-    print "Reference =", reference
-    print "omat_inverse =", omat_file
+    # print "omat_rigid = ", omat
+    # print "Reference =", reference
+    # print "omat_inverse =", omat_file
 
     apply_inverse_trans = "flirt -in " + input_file + " -ref " + reference + " -applyxfm -init " + omat_file + " -o " + output_file
     output2 = subprocess.check_output(apply_inverse_trans, shell=True)
 
     return output_file
 
+
+def reThreshold(binary_mask):
+    """
+    Only voxels in the new space that overlap by 90% with the 
+    original mask will be included in the new binary mask
+    """
+    print("Thresholding binary mask...")
+    input_file = binary_mask
+    case_name = os.path.basename(input_file)
+    output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-thresholded.nii.gz'
+    output_file = os.path.join(os.path.dirname(input_file), output_name)
+
+    threshold = "fslmaths " + input_file +  " -thr 0.9 -bin " + output_file
+    output1 = subprocess.check_output(threshold, shell=True)
+
+    return output_file
 
 if __name__ == '__main__':
 
@@ -687,9 +702,6 @@ if __name__ == '__main__':
     parser.add_argument('-i', action='store', dest='dwi', type=str,
                         help='Input Diffusion Image')
 
-    parser.add_argument("-r", dest='rotate', type=str,
-                        help="Rotate 180 degree.")
-
     try:
         args = parser.parse_args()
         if len(sys.argv) == 1:
@@ -698,11 +710,6 @@ if __name__ == '__main__':
 
     except SystemExit:
         sys.exit(0)
-
-    rotate_view = False
-    if args.rotate == 'True' or args.rotate == 'true':
-        print "Rotation set to 180 degree"
-        rotate_view = True
 
     if args.dwi:
         f = pathlib.Path(args.dwi)
@@ -774,8 +781,6 @@ if __name__ == '__main__':
 
 
                     imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
-                    if rotate_view:
-                        imgU16_sagittal = scipy.ndimage.rotate(imgU16_sagittal, 180, axes=(0, 1))
 
                     imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
 
@@ -807,9 +812,9 @@ if __name__ == '__main__':
             np.save(cases_file_c, merge_c)
             np.save(cases_file_a, merge_a)
 
-            dwi_mask_sagittal = predict_mask(cases_file_s, view='sagittal', rotate_view=rotate_view)
-            dwi_mask_coronal = predict_mask(cases_file_c, view='coronal', rotate_view=rotate_view)
-            dwi_mask_axial = predict_mask(cases_file_a, view='axial', rotate_view=rotate_view)
+            dwi_mask_sagittal = predict_mask(cases_file_s, view='sagittal')
+            dwi_mask_coronal = predict_mask(cases_file_c, view='coronal')
+            dwi_mask_axial = predict_mask(cases_file_a, view='axial')
 
             print "Splitting files...."
 
@@ -829,8 +834,7 @@ if __name__ == '__main__':
                 multi_view_mask = multi_view_fast(sagittal_SO, 
                                                   coronal_SO, 
                                                   axial_SO, 
-                                                  input_file, 
-                                                  rotate_view=rotate_view)
+                                                  input_file)
 
                 brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], 
                                                     multi_view_mask, 
@@ -849,7 +853,7 @@ if __name__ == '__main__':
 
         # Input in nrrd / nhdr / nii / nii.gz format
         elif filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD) | filename.endswith(SUFFIX_NIFTI_GZ):
-            print "Nrrd / Nhdr file format"
+          
             input_file = filename
             asb_path = os.path.abspath(input_file)
             directory = os.path.dirname(asb_path)
@@ -870,21 +874,21 @@ if __name__ == '__main__':
             b0_normalized = normalize(b0_resampled)
             b0_transform, omat_file = rigid_body_trans(b0_normalized)
 
-            dwi_mask_sagittal = predict_mask(b0_transform, view='sagittal', rotate_view=rotate_view)
-            dwi_mask_coronal = predict_mask(b0_transform, view='coronal', rotate_view=rotate_view)
-            dwi_mask_axial = predict_mask(b0_transform, view='axial', rotate_view=rotate_view)
+            dwi_mask_sagittal = predict_mask(b0_transform, view='sagittal')
+            dwi_mask_coronal = predict_mask(b0_transform, view='coronal')
+            dwi_mask_axial = predict_mask(b0_transform, view='axial')
 
             subject_name = os.path.join(directory, input_file)
 
             multi_view_mask = multi_view_fast(dwi_mask_sagittal, 
                                              dwi_mask_coronal, 
                                              dwi_mask_axial, 
-                                             input_file, 
-                                             rotate_view=rotate_view)
+                                             input_file)
 
             #brain_mask_sagittal = npy_to_nhdr(b0_transform, dwi_mask_sagittal, subject_name, dimensions, view='sagittal', reference=b0_normalized)
             #brain_mask_coronal = npy_to_nhdr(b0_transform, dwi_mask_coronal, subject_name, dimensions, view='coronal', reference=b0_normalized)
             #brain_mask_axial = npy_to_nhdr(b0_transform, dwi_mask_axial, subject_name, dimensions, view='axial', reference=b0_normalized)
+
             brain_mask_multi = npy_to_nhdr(b0_transform, 
                                             multi_view_mask, 
                                             subject_name, 
