@@ -37,6 +37,7 @@ You need to have following in order for this library to work as expected
 12) keras >= 2.1.6
 13) cudatoolkit = 9.0
 14) cudnn = 7.0.5
+15) gputil = 1.4.0
 
 ### Code Author
 * Raunak Dey - [raun1](https://github.com/raun1)
