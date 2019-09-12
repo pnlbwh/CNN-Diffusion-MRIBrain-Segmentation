@@ -32,12 +32,24 @@ import os
 import os.path
 from os import path
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress tensor flow message
-import tensorflow as tf
-# if tf.test.is_gpu_available():
-#     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-# else:
-#     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+import GPUtil 
+
+# Set CUDA_DEVICE_ORDER so the IDs assigned by CUDA match those from nvidia-smi
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+
+# Get the first available GPU
+try:
+    DEVICE_ID_LIST = GPUtil.getFirstAvailable()
+    DEVICE_ID = DEVICE_ID_LIST[0] # grab first element from list
+    print("GPU found...")
+
+    # Set CUDA_VISIBLE_DEVICES to mask out all other GPUs than the first available device id
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_ID)
+
+except RuntimeError:
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+    print("GPU not available...")
+
 import tensorflow as tf
 import re
 import sys
