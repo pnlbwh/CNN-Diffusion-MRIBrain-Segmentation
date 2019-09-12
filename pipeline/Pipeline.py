@@ -17,7 +17,7 @@ CompNet.py
 5)  Re sample nii.gz file to 246 x 246
 6)  Pads the Image adding zeros to 256 x 256
 7)  Normalize the Image by 99th percentile
-8)  Applys Rigid-Body tranformation to standard MNI space
+8)  Applys Rigid-Body tranformation to standard MNI space using
 9)  Neural network brain mask prediction across the 3 principal axis
 10) Performs Multi View Aggregation
 11) Converts npy to nhdr,nrrd,nii,nii.gz
@@ -42,7 +42,7 @@ import tensorflow as tf
 import re
 import sys
 import subprocess
-import argparse
+import argparse, textwrap
 import datetime
 import os.path
 import pathlib
@@ -700,12 +700,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', action='store', dest='dwi', type=str,
-                        help='Input Diffusion Image')
+                        help=" input single diffusion image or a caselist ")
 
     try:
         args = parser.parse_args()
         if len(sys.argv) == 1:
             parser.print_help()
+            parser.error('too few arguments')
             sys.exit(0)
 
     except SystemExit:
@@ -765,7 +766,7 @@ if __name__ == '__main__':
 
                         b0_nii = nhdr_to_nifti(b0_nhdr)
                     else:
-                        b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
+                        b0_nii = extract_b0(os.path.join(directory, input_file))
 
                     dimensions = get_dimension(b0_nii)
                     cases_dim.append(dimensions)
@@ -867,7 +868,7 @@ if __name__ == '__main__':
 
                 b0_nii = nhdr_to_nifti(b0_nhdr)
             else:
-                b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
+                b0_nii = extract_b0(os.path.join(directory, input_file))
 
             dimensions = get_dimension(b0_nii)
             b0_resampled = resample(b0_nii)
