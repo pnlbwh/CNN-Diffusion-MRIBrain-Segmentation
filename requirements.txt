@@ -12,3 +12,4 @@ tensorflow-gpu>=1.8.0
 keras>=2.1.6
 cudatoolkit=9.1
 cudnn=7.0.5
+gputil = 1.4.0
