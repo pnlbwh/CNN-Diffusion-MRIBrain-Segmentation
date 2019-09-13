@@ -3,7 +3,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	09/11/2019
+# Last Updated: 	09/13/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -23,7 +23,8 @@ CompNet.py
 11) Converts npy to nhdr,nrrd,nii,nii.gz
 12) Applys Inverse tranformation
 13) Down sample to original resolution
-14) Cleaning
+14) Peforms Binary Dilation
+15) Cleaning
 """
 
 
@@ -31,6 +32,7 @@ CompNet.py
 import os
 import os.path
 from os import path
+import webbrowser
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress tensor flow message
 import GPUtil 
 
@@ -41,7 +43,7 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 try:
     DEVICE_ID_LIST = GPUtil.getFirstAvailable()
     DEVICE_ID = DEVICE_ID_LIST[0] # grab first element from list
-    print("GPU found...")
+    print("GPU found...", DEVICE_ID)
 
     # Set CUDA_VISIBLE_DEVICES to mask out all other GPUs than the first available device id
     os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_ID)
@@ -61,6 +63,7 @@ import pathlib
 import nibabel as nib
 import numpy as np
 import multiprocessing as mp
+import scipy.ndimage as nd
 from os import path
 from keras.models import load_model
 from keras.models import model_from_json
@@ -450,6 +453,34 @@ def normalize(b0_resampled):
     return output_file
 
 
+def save_nifti(fname, data, affine=None, hdr=None):
+   
+    hdr.set_data_dtype('int16')
+    result_img = nib.Nifti1Image(data, affine, header=hdr)
+    result_img.to_filename(fname)
+
+
+def binary_dilation_and_erosion(affined_mask, fname):
+
+    print "Performing Binary dilation and erosion..."
+
+    data_affine = nib.load(affined_mask)
+
+    data_affine_mask = nib.load(affined_mask).get_data()
+
+    data_affine_bool = nd.binary_dilation(data_affine_mask)
+
+    dilated_affine = nd.binary_dilation(input=data_affine_bool, iterations=2)
+
+    eroded_affine = nd.binary_erosion(input=dilated_affine, iterations=1)
+
+    data_affine_binary = nd.binary_erosion(eroded_affine).astype(data_affine_mask.dtype)
+
+    result_img = nib.Nifti1Image(data_affine_binary, data_affine.affine, data_affine.header)
+
+    result_img.to_filename(fname)
+
+
 def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='default', reference='default', omat='default'):
     """
     Parameters
@@ -486,6 +517,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             predict = np.load(cases_mask_arr[i])
             predict[predict >= 0.5] = 1
             predict[predict < 0.5] = 0
+            predict = predict.astype('int16')
             image_predict = nib.Nifti1Image(predict, image_space.affine, image_space.header)
             output_dir = os.path.dirname(sub_name[i])
             output_file = cases_mask_arr[i][:len(cases_mask_arr[i]) - len(SUFFIX_NPY)] + 'nii.gz'
@@ -514,19 +546,36 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             else:
                 format = SUFFIX_NIFTI
 
-            output_nhdr = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
+            # Neural Network Predicted Mask
+            output_nhdr = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_originalMask.nii.gz'
             output_folder = os.path.join(output_dir, output_nhdr)
             #bashCommand = 'ConvertBetweenFileFormats ' + filled_file + " " + output_folder
             bashCommand = 'mv ' + filled_file + " " + output_folder
             process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
 
-            output_mask.append(output_folder)
+            data_mask = nib.load(output_folder).get_data()
+            data_dwi = nib.load(sub_name[i])
+
+            # DWI original Image affine is copied to the Predicted Mask
+            output_nhdr_affined = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_affinedMask.nii.gz'
+            output_folder_affined = os.path.join(output_dir, output_nhdr_affined)
+
+            save_nifti(output_folder_affined, data_mask, affine=data_dwi.affine, hdr=data_dwi.header)
+
+            output_nhdr_final = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
+            output_folder_final = os.path.join(output_dir, output_nhdr_final)
+
+            # After affine is copied from Original DWI Image to the Predicted Mask, Dilation is performed
+            binary_dilation(output_folder_affined, output_folder_final)
+
+            output_mask.append(output_folder_final)
     else:
         image_space = nib.load(b0_normalized_cases)
         predict = np.load(cases_mask_arr)
         predict[predict >= 0.5] = 1
         predict[predict < 0.5] = 0
+        predict = predict.astype('int16')
         output_dir = os.path.dirname(b0_normalized_cases)
         case_mask_name = os.path.basename(cases_mask_arr)
         image_predict = nib.Nifti1Image(predict, image_space.affine, image_space.header)
@@ -559,15 +608,31 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             format = SUFFIX_NIFTI
 
         sub_base_name = os.path.basename(sub_name)
-        output_mask_name = sub_base_name[:len(sub_base_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
 
+        # Neural Network Predicted Mask
+        output_mask_name = sub_base_name[:len(sub_base_name) - (len(format) + 1)] + '-' + view + '_originalMask.nii.gz'
         output_mask = os.path.join(output_dir, output_mask_name)
+
         bashCommand = 'mv ' + filled_file + " " + output_mask
-        #bashCommand = 'ConvertBetweenFileFormats ' + filled_file + " " + output_mask
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
-    return output_mask
+        data_mask = nib.load(output_mask).get_data().astype(np.float32)
+        data_dwi = nib.load(sub_name)
+
+        # DWI original Image affine is copied to the Predicted Mask
+        output_mask_name_affined = sub_base_name[:len(sub_base_name) - (len(format) + 1)] + '-' + view + '_affinedMask.nii.gz'
+        output_mask_affined = os.path.join(output_dir, output_mask_name_affined)
+
+        save_nifti(output_mask_affined, data_mask, affine=data_dwi.affine, hdr=data_dwi.header)
+
+        output_mask_name_final = sub_base_name[:len(sub_base_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
+        output_mask_final = os.path.join(output_dir, output_mask_name_final)
+
+        # After affine is copied from Original DWI Image to the Predicted Mask, Dilation is performed
+        binary_dilation(output_mask_affined, output_mask_final)
+
+    return output_mask_final
 
 
 def clear(directory):
@@ -635,7 +700,7 @@ def rigid_body_trans(b0_nii):
     omat_file = os.path.join(os.path.dirname(input_file), omat_name)
 
     trans_matrix = "flirt -in " + input_file +  " -ref " + reference + \
-                   " -omat " + omat_file + " -dof 6 -cost normmi"
+                   " -omat " + omat_file + " -dof 6 -cost mutualinfo"
 
     #print trans_matrix
     output1 = subprocess.check_output(trans_matrix, shell=True)
@@ -705,6 +770,7 @@ def reThreshold(binary_mask):
 
     return output_file
 
+
 if __name__ == '__main__':
 
     start_t = datetime.datetime.now()
@@ -723,6 +789,8 @@ if __name__ == '__main__':
 
     except SystemExit:
         sys.exit(0)
+
+    tmp_path = "/rfanfs/pnl-zorro/home/sq566/tmp"
 
     if args.dwi:
         f = pathlib.Path(args.dwi)
@@ -760,6 +828,7 @@ if __name__ == '__main__':
             reference_list = []
             omat_list = []
             count = 0
+
             for subjects in case_arr:
                 input_file = subjects
                 f = pathlib.Path(input_file)
@@ -778,7 +847,7 @@ if __name__ == '__main__':
 
                         b0_nii = nhdr_to_nifti(b0_nhdr)
                     else:
-                        b0_nii = extract_b0(os.path.join(directory, input_file))
+                        b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
 
                     dimensions = get_dimension(b0_nii)
                     cases_dim.append(dimensions)
@@ -835,6 +904,7 @@ if __name__ == '__main__':
             cases_mask_coronal = split(dwi_mask_coronal, case_arr, view='coronal')
             cases_mask_axial = split(dwi_mask_axial, case_arr, view='axial')
 
+            slices = " "
             for i in range(0, len(cases_mask_sagittal)):
 
                 sagittal_SO = cases_mask_sagittal[i]
@@ -857,8 +927,20 @@ if __name__ == '__main__':
                                                     reference=reference_list[i], 
                                                     omat=omat_list[i])
                 print "Mask file = ", brain_mask_multi
+
+                str1 = case_arr[i]
+                str2 = brain_mask_multi
+                slices += str1 + " " + str2 + " "
+
+            final = "slicesdir -o" + slices
+            #print final
+        
+            os.chdir(tmp_path)
+            subprocess.check_output(final, shell=True)
             
             clear(os.path.dirname(brain_mask_multi))
+
+            webbrowser.open(os.path.join(tmp_path, 'slicesdir/index.html'))
 
             #sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
             #coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
@@ -880,7 +962,7 @@ if __name__ == '__main__':
 
                 b0_nii = nhdr_to_nifti(b0_nhdr)
             else:
-                b0_nii = extract_b0(os.path.join(directory, input_file))
+                b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
 
             dimensions = get_dimension(b0_nii)
             b0_resampled = resample(b0_nii)
@@ -911,6 +993,17 @@ if __name__ == '__main__':
                                             omat=omat_file)
             clear(directory)
             print "Mask file = ", brain_mask_multi
+
+            slices = " "
+            str1 = subject_name
+            str2 = brain_mask_multi
+            slices += str1 + " " + str2 + " "
+
+            final = "slicesdir -o" + slices
+            #print final
+            os.chdir(tmp_path)
+            subprocess.check_output(final, shell=True)
+            webbrowser.open(os.path.join(tmp_path, 'slicesdir/index.html'))
 
         end_t = datetime.datetime.now()
         total_t = end_t - start_t
