@@ -481,7 +481,7 @@ def binary_dilation_and_erosion(affined_mask, fname):
     result_img.to_filename(fname)
 
 
-def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='default', reference='default', omat='default'):
+def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='default', reference='default', omat='default', rigid=False):
     """
     Parameters
     ---------
@@ -524,9 +524,9 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             nib.save(image_predict, output_file)
 
             #print "Applying Inverse transform before downsampling"
-
-            output_file_inverseMask = inverse_transform(output_file, reference[i], omat)
-            output_file = reThreshold(output_file_inverseMask)
+            if rigid:
+                output_file_inverseMask = inverse_transform(output_file, reference[i], omat[i])
+                output_file = reThreshold(output_file_inverseMask)
 
             downsample_file = output_file[:len(output_file) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-downsampled.nii.gz'
             bashCommand_downsample = "ResampleImage 3 " + output_file + " " + downsample_file + " " + dim[i][0] + "x" + \
@@ -567,7 +567,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             output_folder_final = os.path.join(output_dir, output_nhdr_final)
 
             # After affine is copied from Original DWI Image to the Predicted Mask, Dilation is performed
-            binary_dilation(output_folder_affined, output_folder_final)
+            binary_dilation_and_erosion(output_folder_affined, output_folder_final)
 
             output_mask.append(output_folder_final)
     else:
@@ -584,9 +584,9 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
         nib.save(image_predict, output_file)
 
         #print "Applying Inverse transform before downsampling"
-
-        output_file_inverseMask = inverse_transform(output_file, reference, omat=omat)
-        output_file = reThreshold(output_file_inverseMask)
+        if rigid:
+            output_file_inverseMask = inverse_transform(output_file, reference, omat=omat)
+            output_file = reThreshold(output_file_inverseMask)
 
         case_name = os.path.basename(output_file)
         downsample_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-downsampled.nii.gz'
@@ -630,7 +630,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
         output_mask_final = os.path.join(output_dir, output_mask_name_final)
 
         # After affine is copied from Original DWI Image to the Predicted Mask, Dilation is performed
-        binary_dilation(output_mask_affined, output_mask_final)
+        binary_dilation_and_erosion(output_mask_affined, output_mask_final)
 
     return output_mask_final
 
@@ -771,6 +771,23 @@ def reThreshold(binary_mask):
     return output_file
 
 
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+def list_masks(mask_list, view='default'):
+
+    for i in range(0, len(mask_list)):
+        print view + " Mask file = ", mask_list[i]
+
+
 if __name__ == '__main__':
 
     start_t = datetime.datetime.now()
@@ -779,6 +796,22 @@ if __name__ == '__main__':
 
     parser.add_argument('-i', action='store', dest='dwi', type=str,
                         help=" input single diffusion image or a caselist ")
+
+    parser.add_argument("-axial", type=str2bool, dest='Axial', nargs='?',
+                        const=True, default=False,
+                        help="Activate axial Mask (yes/true/y/1)")
+
+    parser.add_argument("-coronal", type=str2bool, dest='Coronal', nargs='?',
+                        const=True, default=False,
+                        help="Activate coronal Mask (yes/true/y/1)")
+
+    parser.add_argument("-sagittal", type=str2bool, dest='Sagittal', nargs='?',
+                        const=True, default=False,
+                        help="Activate sagittal Mask (yes/true/y/1)")
+
+    parser.add_argument("-rigid", type=str2bool, dest='Rigid', nargs='?',
+                        const=True, default=False,
+                        help="Pefrorm Rigid Body Transformation (yes/true/y/1)")
 
     try:
         args = parser.parse_args()
@@ -789,6 +822,8 @@ if __name__ == '__main__':
 
     except SystemExit:
         sys.exit(0)
+
+
 
     tmp_path = "/rfanfs/pnl-zorro/home/sq566/tmp"
 
@@ -856,11 +891,15 @@ if __name__ == '__main__':
                     b0_resampled = resample(b0_nii)
                     b0_normalized = normalize(b0_resampled)
                     reference_list.append(b0_normalized)
-                    b0_transform, omat_file = rigid_body_trans(b0_normalized)
-                    b0_normalized_cases.append(b0_transform)
-                    omat_list.append(omat_file)
-                    img = nib.load(b0_transform)
 
+                    if args.Rigid:
+                        b0_transform, omat_file = rigid_body_trans(b0_normalized)
+                        b0_normalized_cases.append(b0_transform)
+                        omat_list.append(omat_file)
+                        img = nib.load(b0_transform)
+                    else:
+                        b0_normalized_cases.append(b0_normalized)
+                        img = nib.load(b0_normalized)
 
                     imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
 
@@ -919,13 +958,21 @@ if __name__ == '__main__':
                                                   axial_SO, 
                                                   input_file)
 
-                brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], 
+                if args.Rigid:
+                    brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], 
                                                     multi_view_mask, 
                                                     case_arr[i], 
                                                     cases_dim[i],
                                                     view='multi', 
                                                     reference=reference_list[i], 
                                                     omat=omat_list[i])
+                else:
+                      brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], 
+                                                    multi_view_mask, 
+                                                    case_arr[i], 
+                                                    cases_dim[i],
+                                                    view='multi')
+
                 print "Mask file = ", brain_mask_multi
 
                 str1 = case_arr[i]
@@ -937,14 +984,36 @@ if __name__ == '__main__':
         
             os.chdir(tmp_path)
             subprocess.check_output(final, shell=True)
-            
+
+            if args.Sagittal:
+                sagittal_mask = npy_to_nhdr(b0_normalized_cases, 
+                                            cases_mask_sagittal, 
+                                            case_arr, 
+                                            cases_dim, 
+                                            view='sagittal', 
+                                            omat=omat_list)
+                list_masks(sagittal_mask, view='sagittal')
+
+            if args.Coronal:
+                coronal_mask = npy_to_nhdr(b0_normalized_cases, 
+                                           cases_mask_coronal, 
+                                           case_arr, 
+                                           cases_dim, 
+                                           view='coronal', 
+                                           omat=omat_list)
+                list_masks(coronal_mask, view='coronal')
+
+            if args.Axial:
+                axial_mask = npy_to_nhdr(b0_normalized_cases, 
+                                         cases_mask_axial, 
+                                         case_arr, 
+                                         cases_dim, 
+                                         view='axial', 
+                                         omat=omat_list)
+                list_masks(axial_mask, view='axial')
+
             clear(os.path.dirname(brain_mask_multi))
-
             webbrowser.open(os.path.join(tmp_path, 'slicesdir/index.html'))
-
-            #sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
-            #coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
-            #axial_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_axial, case_arr, cases_dim, view='axial')
 
         # Input in nrrd / nhdr / nii / nii.gz format
         elif filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD) | filename.endswith(SUFFIX_NIFTI_GZ):
@@ -967,8 +1036,13 @@ if __name__ == '__main__':
             dimensions = get_dimension(b0_nii)
             b0_resampled = resample(b0_nii)
             b0_normalized = normalize(b0_resampled)
-            b0_transform, omat_file = rigid_body_trans(b0_normalized)
 
+            if args.Rigid:
+                b0_transform, omat_file = rigid_body_trans(b0_normalized)
+            else:
+                b0_transform = b0_normalized
+                omat_file = None
+                
             dwi_mask_sagittal = predict_mask(b0_transform, view='sagittal')
             dwi_mask_coronal = predict_mask(b0_transform, view='coronal')
             dwi_mask_axial = predict_mask(b0_transform, view='axial')
@@ -980,9 +1054,30 @@ if __name__ == '__main__':
                                              dwi_mask_axial, 
                                              input_file)
 
-            #brain_mask_sagittal = npy_to_nhdr(b0_transform, dwi_mask_sagittal, subject_name, dimensions, view='sagittal', reference=b0_normalized)
-            #brain_mask_coronal = npy_to_nhdr(b0_transform, dwi_mask_coronal, subject_name, dimensions, view='coronal', reference=b0_normalized)
-            #brain_mask_axial = npy_to_nhdr(b0_transform, dwi_mask_axial, subject_name, dimensions, view='axial', reference=b0_normalized)
+            if args.Sagittal:
+                brain_mask_sagittal = npy_to_nhdr(b0_transform, 
+                                                  dwi_mask_sagittal, 
+                                                  subject_name,
+                                                  dimensions, 
+                                                  view='sagittal', 
+                                                  reference=b0_normalized,
+                                                  omat=omat_file, rigid=args.Rigid)
+            if args.Coronal:
+                brain_mask_coronal = npy_to_nhdr(b0_transform, 
+                                                dwi_mask_coronal, 
+                                                subject_name, 
+                                                dimensions,
+                                                view='coronal', 
+                                                reference=b0_normalized,
+                                                omat=omat_file, rigid=args.Rigid)
+            if args.Axial:
+                brain_mask_axial = npy_to_nhdr(b0_transform, 
+                                               dwi_mask_axial, 
+                                               subject_name, 
+                                               dimensions, 
+                                               view='axial', 
+                                               reference=b0_normalized,
+                                               omat=omat_file, rigid=args.Rigid)
 
             brain_mask_multi = npy_to_nhdr(b0_transform, 
                                             multi_view_mask, 
@@ -990,9 +1085,15 @@ if __name__ == '__main__':
                                             dimensions, 
                                             view='multi', 
                                             reference=b0_normalized, 
-                                            omat=omat_file)
+                                            omat=omat_file, rigid=args.Rigid)
             clear(directory)
-            print "Mask file = ", brain_mask_multi
+            print "Multiview Mask file = ", brain_mask_multi
+            if args.Sagittal:
+                print "Sagittal Mask file = ", brain_mask_sagittal
+            if args.Coronal:
+                print "Coronal Mask file = ", brain_mask_coronal
+            if args.Axial:
+                print "Axial Mask file = ", brain_mask_axial
 
             slices = " "
             str1 = subject_name
