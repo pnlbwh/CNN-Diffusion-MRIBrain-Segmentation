@@ -3,7 +3,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	09/16/2019
+# Last Updated: 	09/13/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -694,7 +694,7 @@ def rigid_body_trans(b0_nii):
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-transformed.nii.gz'
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
-    reference = '/rfanfs/pnl-zorro/home/sq566/CompNetPipeline/reference/dwib0.nii.gz'
+    reference = '/rfanfs/pnl-zorro/home/sq566/CompNetPipeline/reference/eight256.nii.gz'
 
     #Compute Transformation matrix using flirt
     omat_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '.mat'
@@ -966,13 +966,15 @@ if __name__ == '__main__':
                                                     cases_dim[i],
                                                     view='multi', 
                                                     reference=reference_list[i], 
-                                                    omat=omat_list[i])
+                                                    omat=omat_list[i], 
+                                                    rigid=args.Rigid)
                 else:
                       brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], 
                                                     multi_view_mask, 
                                                     case_arr[i], 
                                                     cases_dim[i],
-                                                    view='multi')
+                                                    view='multi', 
+                                                    rigid=args.Rigid)
 
                 print "Mask file = ", brain_mask_multi
 
@@ -992,7 +994,8 @@ if __name__ == '__main__':
                                             case_arr, 
                                             cases_dim, 
                                             view='sagittal', 
-                                            omat=omat_list)
+                                            omat=omat_list, 
+                                            rigid=args.Rigid)
                 list_masks(sagittal_mask, view='sagittal')
 
             if args.Coronal:
@@ -1001,7 +1004,8 @@ if __name__ == '__main__':
                                            case_arr, 
                                            cases_dim, 
                                            view='coronal', 
-                                           omat=omat_list)
+                                           omat=omat_list, 
+                                           rigid=args.Rigid)
                 list_masks(coronal_mask, view='coronal')
 
             if args.Axial:
@@ -1010,7 +1014,8 @@ if __name__ == '__main__':
                                          case_arr, 
                                          cases_dim, 
                                          view='axial', 
-                                         omat=omat_list)
+                                         omat=omat_list, 
+                                         rigid=args.Rigid)
                 list_masks(axial_mask, view='axial')
 
             clear(os.path.dirname(brain_mask_multi))
