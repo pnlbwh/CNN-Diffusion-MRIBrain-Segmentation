@@ -3,7 +3,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	09/13/2019
+# Last Updated: 	09/16/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -641,6 +641,7 @@ def clear(directory):
         if filename.startswith('Comp') | filename.endswith(SUFFIX_NPY) | \
                 filename.endswith('_SO.nii.gz') | filename.endswith('downsampled.nii.gz') | \
                 filename.endswith('-thresholded.nii.gz') | filename.endswith('-inverse.mat') | \
+                filename.endswith('_affinedMask.nii.gz') | filename.endswith('_originalMask.nii.gz') | \
                 filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz'):
                 os.unlink(directory + '/' + filename)
 
@@ -882,7 +883,7 @@ if __name__ == '__main__':
 
                         b0_nii = nhdr_to_nifti(b0_nhdr)
                     else:
-                        b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
+                        b0_nii = extract_b0(os.path.join(directory, input_file))
 
                     dimensions = get_dimension(b0_nii)
                     cases_dim.append(dimensions)
@@ -1031,7 +1032,7 @@ if __name__ == '__main__':
 
                 b0_nii = nhdr_to_nifti(b0_nhdr)
             else:
-                b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
+                b0_nii = extract_b0(os.path.join(directory, input_file))
 
             dimensions = get_dimension(b0_nii)
             b0_resampled = resample(b0_nii)
@@ -1042,7 +1043,7 @@ if __name__ == '__main__':
             else:
                 b0_transform = b0_normalized
                 omat_file = None
-                
+
             dwi_mask_sagittal = predict_mask(b0_transform, view='sagittal')
             dwi_mask_coronal = predict_mask(b0_transform, view='coronal')
             dwi_mask_axial = predict_mask(b0_transform, view='axial')
