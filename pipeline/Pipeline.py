@@ -3,7 +3,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	09/13/2019
+# Last Updated: 	09/21/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -23,7 +23,7 @@ CompNet.py
 11) Converts npy to nhdr,nrrd,nii,nii.gz
 12) Applys Inverse tranformation
 13) Down sample to original resolution
-14) Peforms Binary Dilation
+14) Peforms Binary Dilation and Erosion
 15) Cleaning
 """
 
@@ -467,21 +467,13 @@ def save_nifti(fname, data, affine=None, hdr=None):
 def binary_dilation_and_erosion(affined_mask, fname):
 
     print "Performing Binary dilation and erosion..."
-
     data_affine = nib.load(affined_mask)
-
     data_affine_mask = nib.load(affined_mask).get_data()
-
     data_affine_bool = nd.binary_dilation(data_affine_mask)
-
     dilated_affine = nd.binary_dilation(input=data_affine_bool, iterations=2)
-
     eroded_affine = nd.binary_erosion(input=dilated_affine, iterations=1)
-
     data_affine_binary = nd.binary_erosion(eroded_affine).astype(data_affine_mask.dtype)
-
     result_img = nib.Nifti1Image(data_affine_binary, data_affine.affine, data_affine.header)
-
     result_img.to_filename(fname)
 
 
@@ -529,8 +521,8 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
 
             #print "Applying Inverse transform before downsampling"
             if rigid:
-                output_file_inverseMask = inverse_transform(output_file, reference[i], omat[i])
-                output_file = reThreshold(output_file_inverseMask)
+                output_file_inverseMask = ANTS_inverse_transform(output_file, reference[i], omat[i])
+                output_file = output_file_inverseMask #FSL_reThreshold(output_file_inverseMask)
 
             downsample_file = output_file[:len(output_file) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-downsampled.nii.gz'
             bashCommand_downsample = "ResampleImage 3 " + output_file + " " + downsample_file + " " + dim[i][0] + "x" + \
@@ -589,8 +581,8 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
 
         #print "Applying Inverse transform before downsampling"
         if rigid:
-            output_file_inverseMask = inverse_transform(output_file, reference, omat=omat)
-            output_file = reThreshold(output_file_inverseMask)
+            output_file_inverseMask = ANTS_inverse_transform(output_file, reference, omat=omat)
+            output_file = output_file_inverseMask #FSL_reThreshold(output_file_inverseMask)
 
         case_name = os.path.basename(output_file)
         downsample_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-downsampled.nii.gz'
@@ -645,8 +637,10 @@ def clear(directory):
         if filename.startswith('Comp') | filename.endswith(SUFFIX_NPY) | \
                 filename.endswith('_SO.nii.gz') | filename.endswith('downsampled.nii.gz') | \
                 filename.endswith('-thresholded.nii.gz') | filename.endswith('-inverse.mat') | \
+                filename.endswith('-Warped.nii.gz') | filename.endswith('-0GenericAffine.mat') | \
                 filename.endswith('_affinedMask.nii.gz') | filename.endswith('_originalMask.nii.gz') | \
-                filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz'):
+                filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz') | \
+                filename.endswith('-InverseWarped.nii.gz'):
                 os.unlink(directory + '/' + filename)
 
 
@@ -690,9 +684,33 @@ def split(cases_file, case_arr, view='default'):
     return predict_mask
 
 
-def rigid_body_trans(b0_nii):
+def ANTS_rigid_body_trans(b0_nii):
+    print("Performing ants rigid body transformation...")
+    input_file = b0_nii
+    case_name = os.path.basename(input_file)
+    output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-'
+    output_file = os.path.join(os.path.dirname(input_file), output_name)
 
-    print("Performing rigid body transformation...")
+    reference = '/rfanfs/pnl-zorro/home/sq566/CompNetPipeline/reference/eight256.nii.gz'
+
+    trans_matrix = "antsRegistrationSyNQuick.sh -d 3 -f " + reference + " -m " + input_file + " -t r -o " + output_file
+    output1 = subprocess.check_output(trans_matrix, shell=True)
+
+    omat_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-0GenericAffine.mat'
+    omat_file = os.path.join(os.path.dirname(input_file), omat_name)
+
+    output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-Warped.nii.gz'
+    transformed_file = os.path.join(os.path.dirname(input_file), output_name)
+
+    #print "output_file = ", transformed_file
+    #print "omat_file = ", omat_file
+
+    return transformed_file, omat_file
+
+
+def FSL_rigid_body_trans(b0_nii):
+
+    print("Performing fsl rigid body transformation...")
     input_file = b0_nii
     case_name = os.path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-transformed.nii.gz'
@@ -720,7 +738,27 @@ def rigid_body_trans(b0_nii):
     return output_file, omat_file
 
 
-def inverse_transform(predicted_mask, reference, omat='default'):
+def ANTS_inverse_transform(predicted_mask, reference, omat='default'):
+
+    #print "Mask file = ", predicted_mask
+    #print "Reference = ", reference
+    #print "omat = ", omat
+
+    print("Performing ants inverse transform...")
+    input_file = predicted_mask
+    case_name = os.path.basename(input_file)
+    output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-inverse.nii.gz'
+    output_file = os.path.join(os.path.dirname(input_file), output_name)
+
+
+    apply_inverse_trans = "antsApplyTransforms -d 3 -i " + predicted_mask + " -r " + reference + " -o " \
+                            + output_file + " --transform [" + omat + ",1]"
+
+    output2 = subprocess.check_output(apply_inverse_trans, shell=True)
+    return output_file
+
+
+def FSL_inverse_transform(predicted_mask, reference, omat='default'):
     """
     Parameters
     ---------
@@ -735,7 +773,11 @@ def inverse_transform(predicted_mask, reference, omat='default'):
                           str  (Inverse transformed brain mask filename which is stored in disk in *.nii.gz format)
     """
 
-    print("Performing inverse transform...")
+    print "Mask file = ", predicted_mask
+    print "Reference = ", reference
+    print "omat = ", omat
+
+    print("Performing fsl inverse transform...")
     input_file = predicted_mask
     case_name = os.path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-inverse.nii.gz'
@@ -759,7 +801,7 @@ def inverse_transform(predicted_mask, reference, omat='default'):
     return output_file
 
 
-def reThreshold(binary_mask):
+def FSL_reThreshold(binary_mask):
     """
     Only voxels in the new space that overlap by 90% with the 
     original mask will be included in the new binary mask
@@ -816,7 +858,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-rigid", type=str2bool, dest='Rigid', nargs='?',
                         const=True, default=False,
-                        help="Pefrorm Rigid Body Transformation (yes/true/y/1)")
+                        help="Performs Rigid Body Transformation (yes/true/y/1)")
 
     try:
         args = parser.parse_args()
@@ -898,7 +940,7 @@ if __name__ == '__main__':
                     reference_list.append(b0_normalized)
 
                     if args.Rigid:
-                        b0_transform, omat_file = rigid_body_trans(b0_normalized)
+                        b0_transform, omat_file = ANTS_rigid_body_trans(b0_normalized)
                         b0_normalized_cases.append(b0_transform)
                         omat_list.append(omat_file)
                         img = nib.load(b0_transform)
@@ -1048,7 +1090,7 @@ if __name__ == '__main__':
             b0_normalized = normalize(b0_resampled)
 
             if args.Rigid:
-                b0_transform, omat_file = rigid_body_trans(b0_normalized)
+                b0_transform, omat_file = ANTS_rigid_body_trans(b0_normalized)
             else:
                 b0_transform = b0_normalized
                 omat_file = None
