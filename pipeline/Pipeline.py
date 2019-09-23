@@ -3,7 +3,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	09/21/2019
+# Last Updated: 	09/23/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -465,6 +465,15 @@ def save_nifti(fname, data, affine=None, hdr=None):
 
 
 def binary_dilation_and_erosion(affined_mask, fname):
+    """
+    The reason for performing this step is because, the CNN predicted mask
+    has a different pixel resolution and we want the pixel resolution to be 
+    same as the original dwi volume
+    1) The original dwi volume header is to copied to the CNN mask
+    2) The mask is little bit undersegmnedted after performing step 1 (i.e Some of the pixels which has the value 1 
+                                                                        in the borders changes to 0 )
+    3) We perform 2 binary dilation and 1 erosion
+    """
 
     print "Performing Binary dilation and erosion..."
     data_affine = nib.load(affined_mask)
