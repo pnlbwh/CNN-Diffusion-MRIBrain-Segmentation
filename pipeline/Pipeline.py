@@ -3,7 +3,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	09/23/2019
+# Last Updated: 	09/25/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -43,7 +43,7 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 try:
     DEVICE_ID_LIST = GPUtil.getFirstAvailable()
     DEVICE_ID = DEVICE_ID_LIST[0] # grab first element from list
-    print("GPU found...", DEVICE_ID)
+    print "GPU found...", DEVICE_ID
 
     # Set CUDA_VISIBLE_DEVICES to mask out all other GPUs than the first available device id
     os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_ID)
@@ -53,6 +53,7 @@ except RuntimeError:
     print("GPU not available...")
 
 import tensorflow as tf
+import multiprocessing as mp
 import re
 import sys
 import subprocess
@@ -62,11 +63,13 @@ import os.path
 import pathlib
 import nibabel as nib
 import numpy as np
-import multiprocessing as mp
 import scipy.ndimage as nd
 from os import path
 from keras.models import load_model
 from keras.models import model_from_json
+from keras.utils import multi_gpu_model
+from multiprocessing import Process, Manager, Value, Pool
+import multiprocessing as mp
 import cv2
 import sys
 import keras
@@ -162,6 +165,9 @@ def predict_mask(input_file, view='default'):
         x_test = np.load(input_file)
 
     x_test = x_test.reshape(x_test.shape + (1,))
+
+    #parallel_model = multi_gpu_model(loaded_model, gpus=4)
+
     predict_x = loaded_model.predict(x_test, verbose=1)
     SO = predict_x[5]  # Segmentation Output
     del predict_x
@@ -429,6 +435,13 @@ def nhdr_to_nifti(Nhdr_file):
 
 def normalize(b0_resampled):
     """
+    Intensity based segmentation of MR images is hampered by radio frerquency field
+    inhomogeneity causing intensity variation. The intensity range is typically
+    scaled between the highest and lowest signal in the Image. Intensity values
+    of the same tissue can vary between scans. The pixel value in images must be
+    scaled prior to providing the images as input to CNN. The data is projected in to
+    a predefined range [0,1]
+
     Parameters
     ---------
     b0_resampled : str
@@ -714,7 +727,7 @@ def ANTS_rigid_body_trans(b0_nii):
     #print "output_file = ", transformed_file
     #print "omat_file = ", omat_file
 
-    return transformed_file, omat_file
+    return (transformed_file, omat_file)
 
 
 def FSL_rigid_body_trans(b0_nii):
@@ -844,9 +857,43 @@ def list_masks(mask_list, view='default'):
         print view + " Mask file = ", mask_list[i]
 
 
+def pre_process(subject, split_dim, cases_dim, reference_list, shuffled_list):
+
+    input_file = subject
+    f = pathlib.Path(input_file)
+
+    if f.exists():
+        input_file = str(f)
+        asb_path = os.path.abspath(input_file)
+        directory = os.path.dirname(input_file)
+        input_file = os.path.basename(input_file)
+
+        if input_file.endswith(SUFFIX_NRRD) | input_file.endswith(SUFFIX_NHDR):
+            if not check_gradient(os.path.join(directory, input_file)):
+                b0_nhdr = extract_b0(os.path.join(directory, input_file))
+            else:
+                b0_nhdr = os.path.join(directory, input_file)
+
+            b0_nii = nhdr_to_nifti(b0_nhdr)
+        else:
+            b0_nii = extract_b0(os.path.join(directory, input_file))
+
+        dimensions = get_dimension(b0_nii)
+        cases_dim.append(dimensions)
+        split_dim.append(int(dimensions[0]))
+        b0_resampled = resample(b0_nii)
+        b0_normalized = normalize(b0_resampled)
+        reference_list.append(b0_normalized)
+        shuffled_list.append(subject)
+
+    else:
+        print "File not found ", input_file
+        sys.exit(1)
+
+
 if __name__ == '__main__':
 
-    start_t = datetime.datetime.now()
+    start_total_time = datetime.datetime.now()
     # parser module for input arguments
     parser = argparse.ArgumentParser()
 
@@ -878,8 +925,6 @@ if __name__ == '__main__':
 
     except SystemExit:
         sys.exit(0)
-
-
 
     tmp_path = "/rfanfs/pnl-zorro/home/sq566/tmp"
 
@@ -913,65 +958,67 @@ if __name__ == '__main__':
             x_dim = 0
             y_dim = 256
             z_dim = 256
-            split_dim = []
             b0_normalized_cases = []
-            cases_dim = []
-            reference_list = []
-            omat_list = []
+            
+            with Manager() as manager:
+
+                split_dim = manager.list()
+                cases_dim = manager.list()
+                reference_list = manager.list()
+                omat_list = []
+                shuffled_list = manager.list()
+
+                jobs = []
+
+                for i in range(0,len(case_arr)):
+                    p = mp.Process(target=pre_process, args=(case_arr[i],
+                                                             split_dim, 
+                                                             cases_dim, 
+                                                             reference_list,
+                                                             shuffled_list))
+                    jobs.append(p)
+                    p.start()
+        
+                for process in jobs:
+                    process.join()
+
+                reference_list = list(reference_list)
+                split_dim = list(split_dim)
+                cases_dim = list(cases_dim)
+                case_arr = list(shuffled_list)
+
+            if args.Rigid:
+                """
+                Enable Multi core Processing for ANTS Registration
+                """
+                p = Pool(processes=mp.cpu_count())
+                data = p.map(ANTS_rigid_body_trans, [reference_list[i] for i in range(0, len(reference_list))])
+                p.close()
+
+                for subject_ANTS in data:
+                    b0_normalized_cases.append(subject_ANTS[0])
+                    omat_list.append(subject_ANTS[1])
+            else:
+
+                for subject_NO_ANTS in reference_list:
+                    b0_normalized_cases.append(subject_NO_ANTS)
+
             count = 0
+            for b0_nifti in b0_normalized_cases:
+                
+                img = nib.load(b0_nifti)
 
-            for subjects in case_arr:
-                input_file = subjects
-                f = pathlib.Path(input_file)
+                imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
+                imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
+                imgU16_axial = np.swapaxes(imgU16_sagittal, 0, 2) # Axial view
 
-                if f.exists():
-                    input_file = str(f)
-                    asb_path = os.path.abspath(input_file)
-                    directory = os.path.dirname(input_file)
-                    input_file = os.path.basename(input_file)
+                imgU16_sagittal.tofile(f_handle_s)
+                imgU16_coronal.tofile(f_handle_c)
+                imgU16_axial.tofile(f_handle_a)
 
-                    if input_file.endswith(SUFFIX_NRRD) | input_file.endswith(SUFFIX_NHDR):
-                        if not check_gradient(os.path.join(directory, input_file)):
-                           b0_nhdr = extract_b0(os.path.join(directory, input_file))
-                        else:
-                           b0_nhdr = os.path.join(directory, input_file)
+                print "Case completed = ", count
+                count += 1
 
-                        b0_nii = nhdr_to_nifti(b0_nhdr)
-                    else:
-                        b0_nii = extract_b0(os.path.join(directory, input_file))
-
-                    dimensions = get_dimension(b0_nii)
-                    cases_dim.append(dimensions)
-                    x_dim += int(dimensions[0])
-                    split_dim.append(int(dimensions[0]))
-                    b0_resampled = resample(b0_nii)
-                    b0_normalized = normalize(b0_resampled)
-                    reference_list.append(b0_normalized)
-
-                    if args.Rigid:
-                        b0_transform, omat_file = ANTS_rigid_body_trans(b0_normalized)
-                        b0_normalized_cases.append(b0_transform)
-                        omat_list.append(omat_file)
-                        img = nib.load(b0_transform)
-                    else:
-                        b0_normalized_cases.append(b0_normalized)
-                        img = nib.load(b0_normalized)
-
-                    imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
-
-                    imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
-
-                    imgU16_axial = np.swapaxes(imgU16_sagittal, 0, 2) # Axial view
-
-                    imgU16_sagittal.tofile(f_handle_s)
-                    imgU16_coronal.tofile(f_handle_c)
-                    imgU16_axial.tofile(f_handle_a)
-                    print "Case completed = ", count
-                    count += 1
-
-                else:
-                    print "File not found ", input_file
-                    sys.exit(1)
             f_handle_s.close()
             f_handle_c.close()
             f_handle_a.close()
@@ -984,14 +1031,22 @@ if __name__ == '__main__':
             merge_c = np.memmap(binary_file_c, dtype=np.float32, mode='r+', shape=(256 * len(cases_dim), y_dim, z_dim))
             merge_a = np.memmap(binary_file_a, dtype=np.float32, mode='r+', shape=(256 * len(cases_dim), y_dim, z_dim))
 
-            print "Saving training data to disk"
+            print "Saving data to disk"
             np.save(cases_file_s, merge_s)
             np.save(cases_file_c, merge_c)
             np.save(cases_file_a, merge_a)
 
+            end_preprocessing_time = datetime.datetime.now()
+            total_preprocessing_time = end_preprocessing_time - start_total_time
+            print "Pre-Processing Time Taken in min = ", round(int(total_preprocessing_time.seconds)/60, 2)
+
             dwi_mask_sagittal = predict_mask(cases_file_s, view='sagittal')
             dwi_mask_coronal = predict_mask(cases_file_c, view='coronal')
             dwi_mask_axial = predict_mask(cases_file_a, view='axial')
+
+            end_masking_time = datetime.datetime.now()
+            total_masking_time = end_masking_time - start_total_time - total_preprocessing_time
+            print "Masking Time Taken in min = ", round(int(total_masking_time.seconds)/60, 2)
 
             print "Splitting files...."
 
@@ -1077,7 +1132,8 @@ if __name__ == '__main__':
             webbrowser.open(os.path.join(tmp_path, 'slicesdir/index.html'))
 
         # Input in nrrd / nhdr / nii / nii.gz format
-        elif filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD) | filename.endswith(SUFFIX_NIFTI_GZ):
+        elif filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD) | \
+             filename.endswith(SUFFIX_NIFTI_GZ) | filename.endswith(SUFFIX_NIFTI):
           
             input_file = filename
             asb_path = os.path.abspath(input_file)
@@ -1104,9 +1160,17 @@ if __name__ == '__main__':
                 b0_transform = b0_normalized
                 omat_file = None
 
+            end_preprocessing_time = datetime.datetime.now()
+            total_preprocessing_time = end_preprocessing_time - start_total_time
+            print "Pre-Processing Time Taken in min = ", round(int(total_preprocessing_time.seconds)/60, 2)
+
             dwi_mask_sagittal = predict_mask(b0_transform, view='sagittal')
             dwi_mask_coronal = predict_mask(b0_transform, view='coronal')
             dwi_mask_axial = predict_mask(b0_transform, view='axial')
+
+            end_masking_time = datetime.datetime.now()
+            total_masking_time = end_masking_time - start_total_time - total_preprocessing_time
+            print "Masking Time Taken in min = ", round(int(total_masking_time.seconds)/60, 2)
 
             subject_name = os.path.join(directory, input_file)
 
@@ -1167,6 +1231,6 @@ if __name__ == '__main__':
             subprocess.check_output(final, shell=True)
             webbrowser.open(os.path.join(tmp_path, 'slicesdir/index.html'))
 
-        end_t = datetime.datetime.now()
-        total_t = end_t - start_t
-print("Time Taken in sec = ", total_t.seconds)
+        end_total_time = datetime.datetime.now()
+        total_t = end_total_time - start_total_time
+print "Total Time Taken in min = ", round(int(total_t.seconds)/60, 2)
