@@ -1,9 +1,8 @@
-#!/rfanfs/pnl-zorro/home/suheyla/Tools/tensorflow-prebuiltin-pycharm/bin/python
 from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	09/25/2019
+# Last Updated: 	09/28/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -499,7 +498,7 @@ def binary_dilation_and_erosion(affined_mask, fname):
     result_img.to_filename(fname)
 
 
-def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='default', reference='default', omat='default', rigid=False):
+def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='default', reference='default', omat=None, rigid=False):
     """
     Parameters
     ---------
@@ -544,7 +543,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             #print "Applying Inverse transform before downsampling"
             if rigid:
                 output_file_inverseMask = ANTS_inverse_transform(output_file, reference[i], omat[i])
-                output_file = output_file_inverseMask #FSL_reThreshold(output_file_inverseMask)
+                output_file = FSL_reThreshold(output_file_inverseMask)
 
             downsample_file = output_file[:len(output_file) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-downsampled.nii.gz'
             bashCommand_downsample = "ResampleImage 3 " + output_file + " " + downsample_file + " " + dim[i][0] + "x" + \
@@ -604,7 +603,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
         #print "Applying Inverse transform before downsampling"
         if rigid:
             output_file_inverseMask = ANTS_inverse_transform(output_file, reference, omat=omat)
-            output_file = output_file_inverseMask #FSL_reThreshold(output_file_inverseMask)
+            output_file = FSL_reThreshold(output_file_inverseMask)
 
         case_name = os.path.basename(output_file)
         downsample_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-downsampled.nii.gz'
@@ -726,7 +725,6 @@ def ANTS_rigid_body_trans(b0_nii):
 
     #print "output_file = ", transformed_file
     #print "omat_file = ", omat_file
-
     return (transformed_file, omat_file)
 
 
@@ -757,7 +755,7 @@ def FSL_rigid_body_trans(b0_nii):
     #print apply_trans
     output2 = subprocess.check_output(apply_trans, shell=True)
 
-    return output_file, omat_file
+    return (output_file, omat_file)
 
 
 def ANTS_inverse_transform(predicted_mask, reference, omat='default'):
@@ -926,8 +924,6 @@ if __name__ == '__main__':
     except SystemExit:
         sys.exit(0)
 
-    tmp_path = "/rfanfs/pnl-zorro/home/sq566/tmp"
-
     if args.dwi:
         f = pathlib.Path(args.dwi)
         if f.exists():
@@ -947,9 +943,12 @@ if __name__ == '__main__':
             #print(TXT_file)
             unique = TXT_file[:len(TXT_file) - (len(SUFFIX_TXT)+1)]
             #print(unique)
-            binary_file_s = '/rfanfs/pnl-zorro/home/sq566/tmp/' + unique + '_binary_s'
-            binary_file_c = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '_binary_c'
-            binary_file_a = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '_binary_a'
+            storage = os.path.dirname(case_arr[0])
+            tmp_path = storage + '/'
+
+            binary_file_s = storage + '/' + unique + '_binary_s'
+            binary_file_c = storage + '/'+ unique + '_binary_c'
+            binary_file_a = storage + '/'+ unique + '_binary_a'
 
             f_handle_s = open(binary_file_s, 'wb')
             f_handle_c = open(binary_file_c, 'wb')
@@ -1023,9 +1022,9 @@ if __name__ == '__main__':
             f_handle_c.close()
             f_handle_a.close()
             print "Merging npy files"
-            cases_file_s = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '-casefile-sagittal.npy'
-            cases_file_c = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '-casefile-coronal.npy'
-            cases_file_a = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '-casefile-axial.npy'
+            cases_file_s = storage + '/'+ unique + '-casefile-sagittal.npy'
+            cases_file_c = storage + '/'+ unique + '-casefile-coronal.npy'
+            cases_file_a = storage + '/'+ unique + '-casefile-axial.npy'
 
             merge_s = np.memmap(binary_file_s, dtype=np.float32, mode='r+', shape=(256 * len(cases_dim), y_dim, z_dim))
             merge_c = np.memmap(binary_file_c, dtype=np.float32, mode='r+', shape=(256 * len(cases_dim), y_dim, z_dim))
@@ -1099,24 +1098,41 @@ if __name__ == '__main__':
             subprocess.check_output(final, shell=True)
 
             if args.Sagittal:
+                omat = omat_list
+            else:
+                omat = None
+
+            if args.Sagittal:
                 sagittal_mask = npy_to_nhdr(b0_normalized_cases, 
                                             cases_mask_sagittal, 
                                             case_arr, 
                                             cases_dim, 
                                             view='sagittal', 
-                                            omat=omat_list, 
+                                            reference=reference_list,
+                                            omat=omat, 
                                             rigid=args.Rigid)
                 list_masks(sagittal_mask, view='sagittal')
 
             if args.Coronal:
+                omat = omat_list
+            else:
+                omat = None
+
+            if args.Coronal:
                 coronal_mask = npy_to_nhdr(b0_normalized_cases, 
-                                           cases_mask_coronal, 
-                                           case_arr, 
-                                           cases_dim, 
-                                           view='coronal', 
-                                           omat=omat_list, 
-                                           rigid=args.Rigid)
+                                          cases_mask_coronal, 
+                                          case_arr, 
+                                          cases_dim, 
+                                          view='coronal', 
+                                          reference=reference_list,
+                                          omat=omat,  
+                                          rigid=args.Rigid)
                 list_masks(coronal_mask, view='coronal')
+
+            if args.Axial:
+                omat = omat_list
+            else:
+                omat = None
 
             if args.Axial:
                 axial_mask = npy_to_nhdr(b0_normalized_cases, 
@@ -1124,7 +1140,8 @@ if __name__ == '__main__':
                                          case_arr, 
                                          cases_dim, 
                                          view='axial', 
-                                         omat=omat_list, 
+                                         reference=reference_list,
+                                         omat=omat, 
                                          rigid=args.Rigid)
                 list_masks(axial_mask, view='axial')
 
@@ -1139,6 +1156,7 @@ if __name__ == '__main__':
             asb_path = os.path.abspath(input_file)
             directory = os.path.dirname(asb_path)
             input_file = os.path.basename(asb_path)
+            tmp_path = os.path.dirname(asb_path) + '/'
 
             if input_file.endswith(SUFFIX_NRRD) | input_file.endswith(SUFFIX_NHDR):
                 if not check_gradient(os.path.join(directory, input_file)):
