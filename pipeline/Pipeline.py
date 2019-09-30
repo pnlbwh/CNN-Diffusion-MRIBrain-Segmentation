@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	09/28/2019
+# Last Updated: 	09/30/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -173,8 +173,10 @@ def predict_mask(input_file, view='default'):
 
     if input_file.endswith(SUFFIX_NIFTI_GZ):
         if view == 'coronal':
+            #SO[180:,:,:] = 0.0         # Ignoring eyes slices
             SO = np.swapaxes(SO, 1, 0) # coronal to sagittal view
         elif view == 'axial':
+            SO[0:84,:,:] = 0.0         # Ignoring eyes slices
             SO = np.swapaxes(SO, 2, 0) # axial to sagittal view
     np.save(output_file, SO)
     return output_file
@@ -692,8 +694,10 @@ def split(cases_file, case_arr, view='default'):
         end = start + 256
         casex = SO[start:end, :, :]
         if view == 'coronal':
+            #casex[180:,:,:] = 0.0 
             casex = np.swapaxes(casex, 0, 1)
         elif view == 'axial':
+            casex[0:84,:,:] = 0.0
             casex = np.swapaxes(casex, 0, 2)
         input_file = str(case_arr[i])
         output_file = input_file[:len(input_file) - (len(SUFFIX_NHDR) + 1)] + '-' + view +'_SO.npy'
@@ -984,7 +988,7 @@ if __name__ == '__main__':
                 reference_list = list(reference_list)
                 split_dim = list(split_dim)
                 cases_dim = list(cases_dim)
-                case_arr = list(shuffled_list)
+                shuffled_list = list(shuffled_list)
 
             if args.Rigid:
                 """
@@ -1049,9 +1053,9 @@ if __name__ == '__main__':
 
             print "Splitting files...."
 
-            cases_mask_sagittal = split(dwi_mask_sagittal, case_arr, view='sagittal')
-            cases_mask_coronal = split(dwi_mask_coronal, case_arr, view='coronal')
-            cases_mask_axial = split(dwi_mask_axial, case_arr, view='axial')
+            cases_mask_sagittal = split(dwi_mask_sagittal, shuffled_list, view='sagittal')
+            cases_mask_coronal = split(dwi_mask_coronal, shuffled_list, view='coronal')
+            cases_mask_axial = split(dwi_mask_axial, shuffled_list, view='axial')
 
             slices = " "
             for i in range(0, len(cases_mask_sagittal)):
@@ -1060,7 +1064,7 @@ if __name__ == '__main__':
                 coronal_SO = cases_mask_coronal[i]
                 axial_SO = cases_mask_axial[i]
 
-                input_file = case_arr[i]
+                input_file = shuffled_list[i]
 
                 #multi_view_mask = multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file)
                 multi_view_mask = multi_view_fast(sagittal_SO, 
@@ -1071,7 +1075,7 @@ if __name__ == '__main__':
                 if args.Rigid:
                     brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], 
                                                     multi_view_mask, 
-                                                    case_arr[i], 
+                                                    shuffled_list[i], 
                                                     cases_dim[i],
                                                     view='multi', 
                                                     reference=reference_list[i], 
@@ -1080,15 +1084,15 @@ if __name__ == '__main__':
                 else:
                       brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], 
                                                     multi_view_mask, 
-                                                    case_arr[i], 
+                                                    shuffled_list[i], 
                                                     cases_dim[i],
                                                     view='multi', 
                                                     rigid=args.Rigid)
 
                 print "Mask file = ", brain_mask_multi
 
-                str1 = case_arr[i]
-                str2 = brain_mask_multi
+                str1 = shuffled_list[i]
+                str2 = os.path.basename(brain_mask_multi)
                 slices += str1 + " " + str2 + " "
 
             final = "slicesdir -o" + slices
@@ -1105,7 +1109,7 @@ if __name__ == '__main__':
             if args.Sagittal:
                 sagittal_mask = npy_to_nhdr(b0_normalized_cases, 
                                             cases_mask_sagittal, 
-                                            case_arr, 
+                                            shuffled_list, 
                                             cases_dim, 
                                             view='sagittal', 
                                             reference=reference_list,
@@ -1121,7 +1125,7 @@ if __name__ == '__main__':
             if args.Coronal:
                 coronal_mask = npy_to_nhdr(b0_normalized_cases, 
                                           cases_mask_coronal, 
-                                          case_arr, 
+                                          shuffled_list, 
                                           cases_dim, 
                                           view='coronal', 
                                           reference=reference_list,
@@ -1137,7 +1141,7 @@ if __name__ == '__main__':
             if args.Axial:
                 axial_mask = npy_to_nhdr(b0_normalized_cases, 
                                          cases_mask_axial, 
-                                         case_arr, 
+                                         shuffled_list, 
                                          cases_dim, 
                                          view='axial', 
                                          reference=reference_list,
@@ -1240,7 +1244,7 @@ if __name__ == '__main__':
 
             slices = " "
             str1 = subject_name
-            str2 = brain_mask_multi
+            str2 = os.path.basename(brain_mask_multi)
             slices += str1 + " " + str2 + " "
 
             final = "slicesdir -o" + slices
