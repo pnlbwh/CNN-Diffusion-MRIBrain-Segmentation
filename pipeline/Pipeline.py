@@ -885,7 +885,7 @@ def list_masks(mask_list, view='default'):
         print view + " Mask file = ", mask_list[i]
 
 
-def pre_process(subject, split_dim, cases_dim, reference_list, shuffled_list):
+def pre_process(subject, split_dim, cases_dim, reference_list):
 
     input_file = subject
     f = pathlib.Path(input_file)
@@ -904,7 +904,7 @@ def pre_process(subject, split_dim, cases_dim, reference_list, shuffled_list):
 
             b0_nii = nhdr_to_nifti(b0_nhdr)
         else:
-            b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
+            b0_nii = extract_b0(os.path.join(directory, input_file))
 
         dimensions = get_dimension(b0_nii)
         cases_dim.append(dimensions)
@@ -912,8 +912,7 @@ def pre_process(subject, split_dim, cases_dim, reference_list, shuffled_list):
 
         b0_normalized = normalize(b0_nii)
         b0_resampled = resample(b0_normalized)
-        reference_list.append(b0_resampled)
-        shuffled_list.append(subject)
+        reference_list.append((b0_resampled, subject))
 
     else:
         print "File not found ", input_file
@@ -1016,7 +1015,7 @@ if __name__ == '__main__':
                 cases_dim = manager.list()
                 reference_list = manager.list()
                 omat_list = []
-                shuffled_list = manager.list()
+                
 
                 jobs = []
 
@@ -1024,8 +1023,7 @@ if __name__ == '__main__':
                     p = mp.Process(target=pre_process, args=(case_arr[i],
                                                              split_dim, 
                                                              cases_dim, 
-                                                             reference_list,
-                                                             shuffled_list))
+                                                             reference_list))
                     jobs.append(p)
                     p.start()
         
@@ -1035,14 +1033,13 @@ if __name__ == '__main__':
                 reference_list = list(reference_list)
                 split_dim = list(split_dim)
                 cases_dim = list(cases_dim)
-                shuffled_list = list(shuffled_list)
 
             if args.Rigid:
                 """
                 Enable Multi core Processing for ANTS Registration
                 """
                 p = Pool(processes=mp.cpu_count())
-                data = p.map(ANTS_rigid_body_trans, [reference_list[i] for i in range(0, len(reference_list))])
+                data = p.map(ANTS_rigid_body_trans, [reference_list[i][0] for i in range(0, len(reference_list))])
                 p.close()
 
                 for subject_ANTS in data:
@@ -1051,7 +1048,7 @@ if __name__ == '__main__':
             else:
 
                 for subject_NO_ANTS in reference_list:
-                    b0_normalized_cases.append(subject_NO_ANTS)
+                    b0_normalized_cases.append(subject_NO_ANTS[0])
 
             count = 0
             for b0_nifti in b0_normalized_cases:
@@ -1068,6 +1065,13 @@ if __name__ == '__main__':
 
                 print "Case completed = ", count
                 count += 1
+
+            shuffled_list = []
+            reference_new_list = []
+            for i in range(0, len(reference_list)):
+                reference_new_list.append(reference_list[i][0])
+                shuffled_list.append(reference_list[i][1])
+            reference_list = reference_new_list
 
             f_handle_s.close()
             f_handle_c.close()
@@ -1220,7 +1224,7 @@ if __name__ == '__main__':
 
                 b0_nii = nhdr_to_nifti(b0_nhdr)
             else:
-                b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
+                b0_nii = extract_b0(os.path.join(directory, input_file))
 
             dimensions = get_dimension(b0_nii)
 
