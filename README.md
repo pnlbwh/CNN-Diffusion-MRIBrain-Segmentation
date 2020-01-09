@@ -23,20 +23,19 @@ Guha Roy, A., Conjeti, S., Navab, N., and Wachinger, C. 2018. QuickNAT: A Fully 
 
 You need to have following in order for this library to work as expected
 
-1)  python 2.7
-2)  pip >= 19.0
-3)  numpy >= 1.14.0
-4)  nibabel >= 2.2.1
-5)  nilearn >= 0.5.0
-6)  opencv-python >= 3.4.1.15
-7)  pandas >= 0.23.0
-8)  scikit-image >= 0.13.1
-9)  scikit-learn >= 0.20.0
-10) tensorflow >= 1.8.0
-11) tensorflow-gpu >= 1.8.0
-12) keras >= 2.1.6
-13) cudatoolkit = 9.0
-14) cudnn = 7.0.5
+01)  python 2.7
+02)  pip >= 19.0
+03)  numpy >= 1.14.0
+04)  nibabel >= 2.2.1
+05)  nilearn >= 0.5.0
+06)  opencv-python >= 3.4.1.15
+07)  pandas >= 0.23.0
+08)  scikit-image >= 0.13.1
+09)  scikit-learn >= 0.20.0
+10)  tensorflow-gpu >= 1.12.0
+11)  keras >= 2.1.6
+12)  cudatoolkit = 9.0
+13)  cudnn = 7.0.5
 
 ### Code Author
 * Raunak Dey - [raun1](https://github.com/raun1)
