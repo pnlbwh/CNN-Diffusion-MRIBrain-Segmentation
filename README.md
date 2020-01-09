@@ -5,7 +5,7 @@
 The code for training, as well as the Trained Models are provided here.
 The model is trained on 1000 b0 diffusion volumes.
 
-> Model Architecture: https://drive.google.com/open?id=1UwzyaN9V8TVJ9_jZIJjrSslMP9qY3HEn
+> Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
 
 > Trained Model Weights: https://drive.google.com/open?id=1FRsDkVzQDjrR3kM3hGZ6iAlSyQuKrvOs
 
