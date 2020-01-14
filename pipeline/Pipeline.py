@@ -598,7 +598,7 @@ def ANTS_rigid_body_trans(b0_nii, reference=None):
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
     if reference is None:
-        reference = '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/reference/IITmean_b0_256.nii.gz'
+        reference = '/rfanfs/pnl-zorro/software/CNN-Diffusion-BrainMask-Trained-Model-Suheyla/IITmean_b0_256.nii.gz'
 
     trans_matrix = "antsRegistrationSyNQuick.sh -d 3 -f " + reference + " -m " + input_file + " -t r -o " + output_file
     output1 = subprocess.check_output(trans_matrix, shell=True)
