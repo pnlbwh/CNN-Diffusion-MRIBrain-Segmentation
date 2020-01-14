@@ -46,11 +46,11 @@ The proposed networks are designed in the framework of encoder-decoder networks 
 branch generate brain mask
 > 3) Reconstruction Branch - It provides direct feedback to the segmentation and
 complementary branche and expects reasonable predictions from them as input to reconstruct the original input image.
-![Screenshot](https://github.com/pnlbwh/CNN-Brain-MRI-Segmentation/blob/master/CompNet%20Arch.png)
+![Screenshot](https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/blob/master/CompNet%20Arch.png)
 
 
 ### Multi View Aggregation step:
 > The approach is to train 3 separate networks for three principal axes ( Sagittal, Coronal and axial ) and 
 to perform multi-view aggregation step that combines segmentations from models trained on 2D slices along three principal axes: coronal, sagittal and axial. The final segmentation would be obtained by combining the probability maps from all three segmentation.
-![Screenshot](https://github.com/pnlbwh/CNN-Brain-MRI-Segmentation/blob/master/Multiview.png)
+![Screenshot](https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/blob/master/Multiview.png)
 
