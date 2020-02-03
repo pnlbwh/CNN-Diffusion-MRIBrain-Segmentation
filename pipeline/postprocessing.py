@@ -1,8 +1,8 @@
 from __future__ import division
 # -----------------------------------------------------------------
-# Author:       PNL BWH                 
+# Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     01/27/2020
+# Last Updated:     01/31/2020
 # Purpose:          Post-processing pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -33,7 +33,6 @@ import scipy.ndimage as nd
 from os import path
 from multiprocessing import Process, Manager, Value, Pool
 import multiprocessing as mp
-import cv2
 import sys
 from time import sleep
 import scipy as sp
@@ -163,7 +162,7 @@ def nhdr_to_nifti(Nhdr_file):
                   Converted nifti file which is stored in disk
                   Uses "ConvertBetweenFilename" program
     """
-    print "Converting nhdr to nifti"
+    print ("Converting nhdr to nifti")
     input_file = Nhdr_file
     case_name = os.path.basename(input_file)
     output_name = case_name[:len(case_name) - len(SUFFIX_NHDR)] + 'nii.gz'
@@ -264,7 +263,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, view='default', r
 
 
 def clear(directory):
-    print "Cleaning files ..."
+    print ("Cleaning files ...")
     for filename in os.listdir(directory):
         if filename.startswith('Comp') | filename.endswith(SUFFIX_NPY) | \
                 filename.endswith('_SO.nii.gz') | filename.endswith('downsampled.nii.gz') | \
@@ -351,7 +350,7 @@ def str2bool(v):
 def list_masks(mask_list, view='default'):
 
     for i in range(0, len(mask_list)):
-        print view + " Mask file = ", mask_list[i]
+        print (view + " Mask file = ", mask_list[i])
 
 
 def quality_control(mask_list, shuffled_list, tmp_path, view='default'):
@@ -393,10 +392,10 @@ if __name__ == '__main__':
     if args.dwi:
         f = pathlib.Path(args.dwi)
         if f.exists():
-            print "File exist"
+            print ("File exist")
             filename = args.dwi
         else:
-            print "File not found"
+            print ("File not found")
             sys.exit(1)
 
     # Input caselist.txt
@@ -411,8 +410,8 @@ if __name__ == '__main__':
         masked_cases_npy = f.read().splitlines()
          
     dwi_mask_sagittal = masked_cases_npy[0]
-    dwi_mask_coronal = masked_cases_npy[0]
-    dwi_mask_axial = masked_cases_npy[0]
+    dwi_mask_coronal = masked_cases_npy[1]
+    dwi_mask_axial = masked_cases_npy[2]
 
     shuffled_file = storage + '/' + "shulled_cases.txt"
     transformed_file = storage + '/' + "ants_cases.txt"
@@ -424,7 +423,12 @@ if __name__ == '__main__':
     reference_list = [line.rstrip('\n') for line in open(reference_file)]
     omat_list = [line.rstrip('\n') for line in open(omat_file)]
 
-    print "Splitting files...."
+    #print(shuffled_list)
+    #print(transformed_cases)
+    #print(reference_list)
+    #print(omat_list)
+
+    print ("Splitting files....")
     cases_mask_sagittal = split(dwi_mask_sagittal, shuffled_list, view='sagittal')
     cases_mask_coronal = split(dwi_mask_coronal, shuffled_list, view='coronal')
     cases_mask_axial = split(dwi_mask_axial, shuffled_list, view='axial')
@@ -437,10 +441,10 @@ if __name__ == '__main__':
         axial_SO = cases_mask_axial[i]
         input_file = shuffled_list[i]
 
-        print(sagittal_SO)
-        print(coronal_SO)
-        print(axial_SO)
-        print(input_file)
+        #print(sagittal_SO)
+        #print(coronal_SO)
+        #print(axial_SO)
+        #print(input_file)
 
         multi_view_mask = multi_view_fast(sagittal_SO, 
                                           coronal_SO, 
@@ -453,7 +457,7 @@ if __name__ == '__main__':
                                        view='multi', 
                                        reference=list(reference_list[i].split()), 
                                        omat=list(omat_list[i].split()))
-        print "Mask file : ", brain_mask_multi
+        print ("Mask file : ", brain_mask_multi)
         multi_mask.append(brain_mask_multi[0])
 
     quality_control(multi_mask, shuffled_list, tmp_path, view='multi')
@@ -500,8 +504,8 @@ if __name__ == '__main__':
         list_masks(axial_mask, view='axial')
         quality_control(axial_mask, shuffled_list, tmp_path, view='axial')
 
-    for i in range(0, len(cases_mask_sagittal)):
-        clear(os.path.dirname(cases_mask_sagittal[i]))
+    #for i in range(0, len(cases_mask_sagittal)):
+    #    clear(os.path.dirname(cases_mask_sagittal[i]))
 
     webbrowser.open(os.path.join(tmp_path, 'slicesdir_multi/index.html'))
     if args.Sagittal:
@@ -513,4 +517,4 @@ if __name__ == '__main__':
 
     end_total_time = datetime.datetime.now()
     total_t = end_total_time - start_total_time
-    print "Post Processing Time Taken : ", round(int(total_t.seconds)/60, 2), " min"
+    print ("Post Processing Time Taken : ", round(int(total_t.seconds)/60, 2), " min")
