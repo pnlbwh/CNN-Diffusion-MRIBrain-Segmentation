@@ -25,15 +25,12 @@ You need to have following in order for this library to work as expected
 
 01)  python 2.7
 02)  pip >= 19.0
-03)  numpy >= 1.14.0
+03)  numpy >= 1.16.4
 04)  nibabel >= 2.2.1
-05)  pandas >= 0.23.0
-06)  scikit-image >= 0.13.1
-07)  scikit-learn >= 0.20.0
-08)  tensorflow-gpu >= 1.12.0
-09)  keras >= 2.2.4
-10)  cudatoolkit = 9.0
-11)  cudnn = 7.0.5
+05)  tensorflow-gpu >= 1.12.0
+06)  keras >= 2.2.4
+07)  cudatoolkit = 9.0
+08)  cudnn = 7.0.5
 
 ### Code Author
 * Raunak Dey - [raun1](https://github.com/raun1)
