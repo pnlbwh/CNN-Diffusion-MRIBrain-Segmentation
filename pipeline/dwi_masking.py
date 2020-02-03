@@ -1,8 +1,8 @@
 from __future__ import division
 # -----------------------------------------------------------------
-# Author:       PNL BWH                 
+# Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     01/27/2020
+# Last Updated:     01/31/2020
 # Purpose:          CNN diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -28,7 +28,7 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 try:
     DEVICE_ID_LIST = GPUtil.getFirstAvailable()
     DEVICE_ID = DEVICE_ID_LIST[0] # Grab first element from list
-    print "GPU found...", DEVICE_ID
+    print ("GPU found...", DEVICE_ID)
 
     # Set CUDA_VISIBLE_DEVICES to mask out all other GPUs than the first available device id
     os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_ID)
@@ -55,7 +55,6 @@ from keras.models import model_from_json
 from keras.utils import multi_gpu_model
 from multiprocessing import Process, Manager, Value, Pool
 import multiprocessing as mp
-import cv2
 import sys
 from time import sleep
 import keras
@@ -100,7 +99,7 @@ def predict_mask(input_file, view='default'):
                   returns the neural network predicted filename which is stored
                   in disk in 3d numpy array *.npy format
     """
-    print "Loading " + view + " model from disk..."
+    print ("Loading " + view + " model from disk...")
     smooth = 1.
 
     def dice_coef(y_true, y_pred):
@@ -165,10 +164,10 @@ if __name__ == '__main__':
     if args.dwi:
         f = pathlib.Path(args.dwi)
         if f.exists():
-            print "File exist"
+            print ("File exist")
             filename = args.dwi
         else:
-            print "File not found"
+            print ("File not found")
             sys.exit(1)
 
     # Input caselist.txt
@@ -196,4 +195,4 @@ if __name__ == '__main__':
 
     end_masking_time = datetime.datetime.now()
     total_masking_time = end_masking_time - start_total_time
-    print "Masking Time Taken : ", round(int(total_masking_time.seconds)/60, 2), " min"
+    print ("Masking Time Taken : ", round(int(total_masking_time.seconds)/60, 2), " min")
