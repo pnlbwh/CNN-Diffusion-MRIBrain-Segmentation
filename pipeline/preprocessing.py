@@ -1,8 +1,8 @@
 from __future__ import division
 # -----------------------------------------------------------------
-# Author:       PNL BWH                 
+# Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     01/27/2020
+# Last Updated:     01/31/2020
 # Purpose:          Pre-processing pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -34,7 +34,6 @@ import scipy.ndimage as nd
 from os import path
 from multiprocessing import Process, Manager, Value, Pool
 import multiprocessing as mp
-import cv2
 import sys
 from time import sleep
 import scipy as sp
@@ -64,8 +63,8 @@ def check_gradient(Nhdr_file):
     input_file = Nhdr_file
     header_gradient = 0
     total_gradient = 1
-    bashCommand1 = "unu head " + input_file + " | grep -i sizes | awk '{print $5}'"
-    bashCommand2 = "unu head " + input_file + " | grep -i _gradient_ | wc -l"
+    bashCommand1 = ("unu head " + input_file + " | grep -i sizes | awk '{print $5}'")
+    bashCommand2 = ("unu head " + input_file + " | grep -i _gradient_ | wc -l")
     output1 = subprocess.check_output(bashCommand1, shell=True)
     output2 = subprocess.check_output(bashCommand2, shell=True)
     if output1.strip():
@@ -73,12 +72,12 @@ def check_gradient(Nhdr_file):
         total_gradient = int(output2.decode(sys.stdout.encoding))
 
         if header_gradient == total_gradient:
-            print "Gradient check passed, ", input_file
+            print ("Gradient check passed, ", input_file)
         else:
-            print "Gradient check failed, ", input_file, 'Please check file header'
+            print ("Gradient check failed, ", input_file, 'Please check file header')
             sys.exit(1)
     else:
-        print "Gradient check passed, ", input_file
+        print ("Gradient check passed, ", input_file)
         return True
 
 
@@ -95,7 +94,7 @@ def extract_b0(input_file):
                   Extracted b0 nhdr filename which is stored in disk
                   Uses "bse.sh" program
     """
-    print "Extracting b0..."
+    print ("Extracting b0...")
     case_dir = os.path.dirname(input_file)
     case_name = os.path.basename(input_file)
     output_name = 'dwib0_' + case_name
@@ -112,25 +111,25 @@ def extract_b0(input_file):
         bval_file = case_dir + '/' + case_prefix + 'bval'
 
         if path.exists(bvec_file):
-            print "File exist ", bvec_file
+            print ("File exist ", bvec_file)
         else:
-            print "File not found ", bvec_file
+            print ("File not found ", bvec_file)
             bvec_file = case_dir + '/' + case_prefix + 'bvecs'
             if path.exists(bvec_file):
-                print "File exist ", bvec_file
+                print ("File exist ", bvec_file)
             else:
-                print "File not found ", bvec_file
+                print ("File not found ", bvec_file)
             sys.exit(1)
 
         if path.exists(bval_file):
-            print "File exist ", bval_file
+            print ("File exist ", bval_file)
         else:
-            print "File not found ", bval_file
+            print ("File not found ", bval_file)
             bval_file = case_dir + '/' + case_prefix + 'bvals'
             if path.exists(bval_file):
-                print "File exist ", bval_file
+                print ("File exist ", bval_file)
             else:
-                print "File not found ", bval_file
+                print ("File not found ", bval_file)
             sys.exit(1)
 
         # dwiextract only works for nifti files
@@ -159,7 +158,7 @@ def nhdr_to_nifti(Nhdr_file):
                   Converted nifti file which is stored in disk
                   Uses "ConvertBetweenFilename" program
     """
-    print "Converting nhdr to nifti"
+    print ("Converting nhdr to nifti")
     input_file = Nhdr_file
     case_name = os.path.basename(input_file)
     output_name = case_name[:len(case_name) - len(SUFFIX_NHDR)] + 'nii.gz'
@@ -188,7 +187,7 @@ def normalize(b0_resampled):
     output_file : str
                   Normalized by 99th percentile filename which is stored in disk
     """
-    print "Normalizing input data"
+    print ("Normalizing input data")
 
     input_file = b0_resampled
     case_name = os.path.basename(input_file)
@@ -260,7 +259,7 @@ def pre_process(lock, subject, reference_list):
             reference_list.append((b0_nii))
 
         else:
-            print "File not found ", input_file
+            print ("File not found ", input_file)
             sys.exit(1)
 
     #finally:
@@ -291,10 +290,10 @@ if __name__ == '__main__':
     if args.dwi:
         f = pathlib.Path(args.dwi)
         if f.exists():
-            print "File exist"
+            print ("File exist")
             filename = args.dwi
         else:
-            print "File not found"
+            print ("File not found")
             sys.exit(1)
 
         # Input caselist.txt
@@ -368,7 +367,7 @@ if __name__ == '__main__':
                 imgU16_coronal.tofile(f_handle_c)
                 imgU16_axial.tofile(f_handle_a)
 
-                print "Case completed = ", count
+                print ("Case completed = ", count)
                 count += 1
 
             shuffled_list = []
@@ -382,7 +381,7 @@ if __name__ == '__main__':
             f_handle_c.close()
             f_handle_a.close()
 
-            print "Merging npy files..."
+            print ("Merging npy files...")
             cases_file_s = storage + '/'+ unique + '-casefile-sagittal.npy'
             cases_file_c = storage + '/'+ unique + '-casefile-coronal.npy'
             cases_file_a = storage + '/'+ unique + '-casefile-axial.npy'
@@ -396,7 +395,7 @@ if __name__ == '__main__':
             merge_c = np.memmap(binary_file_c, dtype=np.float32, mode='r+', shape=(256 * len(reference_list), y_dim, z_dim))
             merge_a = np.memmap(binary_file_a, dtype=np.float32, mode='r+', shape=(256 * len(reference_list), y_dim, z_dim))
 
-            print "Saving data to disk..."
+            print ("Saving data to disk...")
             np.save(cases_file_s, merge_s)
             np.save(cases_file_c, merge_c)
             np.save(cases_file_a, merge_a)
@@ -410,19 +409,23 @@ if __name__ == '__main__':
             with open(shuffled_file, "w") as dwi_file_axial:
                 for item in shuffled_list:
                     dwi_file_axial.write(item + "\n")
+
             with open(merged_file, "w") as merged_dwi:
                 for item in merged_dwi_list:
                     merged_dwi.write(item + "\n")
+
             with open(registered_file, "w") as reg_dwi:
                 for item in transformed_cases:
                     reg_dwi.write(item + "\n")
+
             with open(mat_file, "w") as mat_dwi:
                 for item in omat_list:
                     mat_dwi.write(item + "\n")
+                    
             with open(reference_file, "w") as ref_dwi:
                 for item in reference_list:
                     ref_dwi.write(item + "\n")
 
             end_preprocessing_time = datetime.datetime.now()
             total_preprocessing_time = end_preprocessing_time - start_total_time
-            print "Pre-Processing Time Taken : ", round(int(total_preprocessing_time.seconds)/60, 2), " min"
+            print ("Pre-Processing Time Taken : ", round(int(total_preprocessing_time.seconds)/60, 2), " min")
