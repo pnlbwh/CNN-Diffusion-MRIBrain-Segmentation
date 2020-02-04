@@ -23,7 +23,7 @@ Guha Roy, A., Conjeti, S., Navab, N., and Wachinger, C. 2018. QuickNAT: A Fully 
 
 You need to have following in order for this library to work as expected
 
-01)  python 2.7
+01)  python 3.6
 02)  pip >= 19.0
 03)  numpy >= 1.16.4
 04)  nibabel >= 2.2.1
