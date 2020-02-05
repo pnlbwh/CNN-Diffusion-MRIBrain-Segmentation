@@ -29,15 +29,7 @@ import os.path
 import pathlib
 import nibabel as nib
 import numpy as np
-import scipy.ndimage as nd
-from os import path
-from multiprocessing import Process, Manager, Value, Pool
-import multiprocessing as mp
-import sys
 from time import sleep
-import scipy as sp
-import scipy.misc, scipy.ndimage.interpolation
-import os
 
 # suffixes
 SUFFIX_NIFTI = "nii"
@@ -481,8 +473,8 @@ if __name__ == '__main__':
         list_masks(axial_mask, view='axial')
         quality_control(axial_mask, shuffled_list, tmp_path, view='axial')
 
-    for i in range(0, len(cases_mask_sagittal)):
-        clear(os.path.dirname(cases_mask_sagittal[i]))
+    #for i in range(0, len(cases_mask_sagittal)):
+    #    clear(os.path.dirname(cases_mask_sagittal[i]))
 
     webbrowser.open(os.path.join(tmp_path, 'slicesdir_multi/index.html'))
     if args.Sagittal:
