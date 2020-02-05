@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     01/31/2020
+# Last Updated:     02/05/2020
 # Purpose:          CNN diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -83,7 +83,7 @@ SUFFIX_TXT = "txt"
 output_mask = []
 
 
-def predict_mask(input_file, view='default'):
+def predict_mask(input_file, view='default', trained_folder):
     """
     Parameters
     ----------
@@ -117,7 +117,7 @@ def predict_mask(input_file, view='default'):
         return dice_coef(y_true, y_pred)
 
     # load json and create model
-    json_file = open('/rfanfs/pnl-zorro/software/CNN-Diffusion-BrainMask-Trained-Model-Suheyla/CompNetBasicModel.json', 'r')
+    json_file = open(trained_folder + '/CompNetBasicModel.json', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = model_from_json(loaded_model_json)
@@ -130,8 +130,7 @@ def predict_mask(input_file, view='default'):
     else:
         optimal = '08'
     # load weights into new model
-    loaded_model.load_weights(
-        '/rfanfs/pnl-zorro/software/CNN-Diffusion-BrainMask-Trained-Model-Suheyla/weights-' + view + '-improvement-' + optimal + '.h5')
+    loaded_model.load_weights(trained_folder + '/weights-' + view + '-improvement-' + optimal + '.h5')
 
     # evaluate loaded model on test data
     loaded_model.compile(optimizer=Adam(lr=1e-5),
@@ -159,6 +158,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', action='store', dest='dwi', type=str,
                         help=" input caselist file in txt format")
+    parser.add_argument('-f', action='store', dest='model_folder', type=str,
+                        help=" folder which contain the trained model")
     args = parser.parse_args()
     mask_list = []
     if args.dwi:
@@ -180,9 +181,9 @@ if __name__ == '__main__':
     with open(merged_file) as f:
         merged_cases_npy = f.read().splitlines()
 
-    dwi_mask_sagittal = predict_mask(merged_cases_npy[0], view='sagittal')
-    dwi_mask_coronal = predict_mask(merged_cases_npy[1], view='coronal')
-    dwi_mask_axial = predict_mask(merged_cases_npy[2], view='axial')
+    dwi_mask_sagittal = predict_mask(merged_cases_npy[0], view='sagittal', args.model_folder)
+    dwi_mask_coronal = predict_mask(merged_cases_npy[1], view='coronal', args.model_folder)
+    dwi_mask_axial = predict_mask(merged_cases_npy[2], view='axial', args.model_folder)
 
     mask_list.append(dwi_mask_sagittal)
     mask_list.append(dwi_mask_coronal)
