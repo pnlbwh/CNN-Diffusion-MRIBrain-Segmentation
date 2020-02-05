@@ -48,19 +48,13 @@ import os.path
 import pathlib
 import nibabel as nib
 import numpy as np
-import scipy.ndimage as nd
-from os import path
 from keras.models import load_model
 from keras.models import model_from_json
-from keras.utils import multi_gpu_model
 from multiprocessing import Process, Manager, Value, Pool
 import multiprocessing as mp
 import sys
 from time import sleep
 import keras
-import scipy as sp
-import scipy.misc, scipy.ndimage.interpolation
-import os
 from keras import losses
 from keras.models import Model
 from keras.layers import Input, merge, concatenate, Conv2D, MaxPooling2D, \
