@@ -22,23 +22,16 @@ import os
 import os.path
 from os import path
 import re
-import sys
 import subprocess
 import argparse, textwrap
 import datetime
-import os.path
 import pathlib
 import nibabel as nib
 import numpy as np
-import scipy.ndimage as nd
-from os import path
 from multiprocessing import Process, Manager, Value, Pool
 import multiprocessing as mp
 import sys
 from time import sleep
-import scipy as sp
-import scipy.misc, scipy.ndimage.interpolation
-import os
 
 # suffixes
 SUFFIX_NIFTI = "nii"
