@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     01/31/2020
+# Last Updated:     02/05/2020
 # Purpose:          Pre-processing pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -212,9 +212,6 @@ def ANTS_rigid_body_trans(b0_nii, reference=None):
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-'
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
-    if reference is None:
-        reference = '/rfanfs/pnl-zorro/software/CNN-Diffusion-BrainMask-Trained-Model-Suheyla/IITmean_b0_256.nii.gz'
-
     trans_matrix = "antsRegistrationSyNQuick.sh -d 3 -f " + reference + " -m " + input_file + " -t r -o " + output_file
     output1 = subprocess.check_output(trans_matrix, shell=True)
 
@@ -224,8 +221,6 @@ def ANTS_rigid_body_trans(b0_nii, reference=None):
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-Warped.nii.gz'
     transformed_file = os.path.join(os.path.dirname(input_file), output_name)
 
-    #print "output_file = ", transformed_file
-    #print "omat_file = ", omat_file
     return (transformed_file, omat_file)
 
 
@@ -274,6 +269,9 @@ if __name__ == '__main__':
 
     parser.add_argument('-i', action='store', dest='dwi', type=str,
                         help=" input caselist file in txt format")
+
+    parser.add_argument('-ref', action='store', dest='ref', type=str,
+                        help=" reference b0 file for registration")
 
     parser.add_argument('-nproc', type=int, dest='cr', default=8, help='number of processes to use')
 
@@ -343,7 +341,7 @@ if __name__ == '__main__':
             Enable Multi core Processing for ANTS Registration
             """
             p = Pool(processes=args.cr)
-            data = p.map(ANTS_rigid_body_trans, reference_list)
+            data = p.map(ANTS_rigid_body_trans, reference_list, args.ref)
             p.close()
 
             for subject_ANTS in data:
@@ -421,7 +419,7 @@ if __name__ == '__main__':
             with open(mat_file, "w") as mat_dwi:
                 for item in omat_list:
                     mat_dwi.write(item + "\n")
-                    
+
             with open(reference_file, "w") as ref_dwi:
                 for item in reference_list:
                     ref_dwi.write(item + "\n")
