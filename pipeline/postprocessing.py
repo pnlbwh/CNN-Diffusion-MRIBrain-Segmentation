@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     01/31/2020
+# Last Updated:     02/05/2020
 # Purpose:          Post-processing pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -147,29 +147,6 @@ def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
 
     SO = multi_view.astype('float32')
     np.save(output_file, SO)
-    return output_file
-
-
-def nhdr_to_nifti(Nhdr_file):
-    """
-    Parameters
-    ---------
-    Nhdr_file   : str
-                  Accepts nhdr filename in *.nhdr format
-    Returns
-    --------
-    output_file : str
-                  Converted nifti file which is stored in disk
-                  Uses "ConvertBetweenFilename" program
-    """
-    print ("Converting nhdr to nifti")
-    input_file = Nhdr_file
-    case_name = os.path.basename(input_file)
-    output_name = case_name[:len(case_name) - len(SUFFIX_NHDR)] + 'nii.gz'
-    output_file = os.path.join(os.path.dirname(input_file), output_name)
-    bashCommand = 'ConvertBetweenFileFormats ' + input_file + " " + output_file
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
     return output_file
 
 
@@ -504,8 +481,8 @@ if __name__ == '__main__':
         list_masks(axial_mask, view='axial')
         quality_control(axial_mask, shuffled_list, tmp_path, view='axial')
 
-    #for i in range(0, len(cases_mask_sagittal)):
-    #    clear(os.path.dirname(cases_mask_sagittal[i]))
+    for i in range(0, len(cases_mask_sagittal)):
+        clear(os.path.dirname(cases_mask_sagittal[i]))
 
     webbrowser.open(os.path.join(tmp_path, 'slicesdir_multi/index.html'))
     if args.Sagittal:
