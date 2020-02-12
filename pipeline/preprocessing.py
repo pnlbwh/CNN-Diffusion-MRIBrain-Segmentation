@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     02/05/2020
+# Last Updated:     02/12/2020
 # Purpose:          Pre-processing pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -217,41 +217,40 @@ def ANTS_rigid_body_trans(b0_nii, reference=None):
     return (transformed_file, omat_file)
 
 
-def pre_process(lock, subject, reference_list):
+def pre_process(input_file, reference_list, b0_threshold= None, which_bse= '--avg'):
 
-    #lock.acquire()
-    #try:
-        input_file = subject
-        f = pathlib.Path(input_file)
+    from conversion import nifti_write
+    from subprocess import Popen
 
-        if f.exists():
-            input_file = str(f)
-            asb_path = os.path.abspath(input_file)
-            directory = os.path.dirname(input_file)
-            input_file = os.path.basename(input_file)
+    if os.path.isfile(input_file):
 
-            if input_file.endswith(SUFFIX_NRRD) | input_file.endswith(SUFFIX_NHDR):
-                if not check_gradient(os.path.join(directory, input_file)):
-                    b0_nhdr = extract_b0(os.path.join(directory, input_file))
-                else:
-                    b0_nhdr = os.path.join(directory, input_file)
+        # convert NRRD/NHDR to NIFIT as the first step
+        # extract bse.py from just NIFTI later
+        if input_file.endswith(SUFFIX_NRRD) | input_file.endswith(SUFFIX_NHDR):
+            inPrefix= input_file.split('.')[0]
+            nifti_write(input_file)
+            input_file= inPrefix+ '.nii.gz'
 
-                b0_nii = nhdr_to_nifti(b0_nhdr)
-            else:
-                #b0_nii = os.path.join(directory, input_file)
-                b0_nii = extract_b0(os.path.join(directory, input_file))
+        directory= os.path.dirname(input_file)
+        inPrefix= input_file.split('.nii')[0]
 
-            #dimensions = get_dimension(b0_nii)
-            #cases_dim.append(dimensions)
-            #split_dim.append(int(dimensions[0]))
-            reference_list.append((b0_nii))
+        b0_nii= os.path.join(directory, 'dwib0_'+ os.path.basename(input_file))
 
-        else:
-            print ("File not found ", input_file)
-            sys.exit(1)
+        cmd = (' ').join(['bse.py',
+                  '-i', input_file,
+                  '--bvals', inPrefix+'.bval',
+                  '-o', b0_nii,
+                  f'-t {b0_threshold}' if b0_threshold else '',
+                  which_bse])
 
-    #finally:
-        #lock.release()
+        p = Popen(cmd, shell=True)
+        p.wait()
+
+        reference_list.append((b0_nii))
+
+    else:
+        print("File not found ", input_file)
+        sys.exit(1)
 
 
 if __name__ == '__main__':
