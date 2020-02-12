@@ -6,3 +6,4 @@ tensorflow-gpu >= 1.12.0
 keras >= 2.2.4
 cudatoolkit = 9.0
 cudnn = 7.0.5
+git+https://github.com/pnlbwh/conversion.git
