@@ -43,6 +43,7 @@ SUFFIX_TXT = "txt"
 output_mask = []
 
 
+# TODO this function is obsolete, remove in future
 def check_gradient(Nhdr_file):
     """
     Parameters
@@ -74,6 +75,7 @@ def check_gradient(Nhdr_file):
         return True
 
 
+# TODO this function is obsolete, remove in future
 def extract_b0(input_file):
     """
     Parameters
@@ -139,6 +141,7 @@ def extract_b0(input_file):
     return output_file
 
 
+# TODO this function is obsolete, remove in future
 def nhdr_to_nifti(Nhdr_file):
     """
     Parameters
