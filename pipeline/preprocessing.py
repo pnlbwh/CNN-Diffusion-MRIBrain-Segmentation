@@ -43,128 +43,6 @@ SUFFIX_TXT = "txt"
 output_mask = []
 
 
-# TODO this function is obsolete, remove in future
-def check_gradient(Nhdr_file):
-    """
-    Parameters
-    ----------
-    Nhdr_file : str
-                Accepts Input filename in Nhdr format
-    Returns
-    -------
-    None
-    """
-    input_file = Nhdr_file
-    header_gradient = 0
-    total_gradient = 1
-    bashCommand1 = ("unu head " + input_file + " | grep -i sizes | awk '{print $5}'")
-    bashCommand2 = ("unu head " + input_file + " | grep -i _gradient_ | wc -l")
-    output1 = subprocess.check_output(bashCommand1, shell=True)
-    output2 = subprocess.check_output(bashCommand2, shell=True)
-    if output1.strip():
-        header_gradient = int(output1.decode(sys.stdout.encoding))
-        total_gradient = int(output2.decode(sys.stdout.encoding))
-
-        if header_gradient == total_gradient:
-            print ("Gradient check passed, ", input_file)
-        else:
-            print ("Gradient check failed, ", input_file, 'Please check file header')
-            sys.exit(1)
-    else:
-        print ("Gradient check passed, ", input_file)
-        return True
-
-
-# TODO this function is obsolete, remove in future
-def extract_b0(input_file):
-    """
-    Parameters
-    ---------
-    input_file   : str
-                  Accepts nhdr filename in *.nhdr format
-                  Accepts nifti filename in *.nii.gz format
-    Returns
-    --------
-    output_file : str
-                  Extracted b0 nhdr filename which is stored in disk
-                  Uses "bse.sh" program
-    """
-    print ("Extracting b0...")
-    case_dir = os.path.dirname(input_file)
-    case_name = os.path.basename(input_file)
-    output_name = 'dwib0_' + case_name
-    output_file = os.path.join(os.path.dirname(input_file), output_name)
-    if case_name.endswith(SUFFIX_NRRD) | case_name.endswith(SUFFIX_NHDR):
-        bashCommand = 'bse.sh -i ' + input_file + ' -o ' + output_file + ' &>/dev/null'
-    else:
-        if case_name.endswith(SUFFIX_NIFTI_GZ):
-            case_prefix = case_name[:len(case_name) - len(SUFFIX_NIFTI_GZ)]
-        else:
-            case_prefix = case_name[:len(case_name) - len(SUFFIX_NIFTI)]
-
-        bvec_file = case_dir + '/' + case_prefix + 'bvec'
-        bval_file = case_dir + '/' + case_prefix + 'bval'
-
-        if path.exists(bvec_file):
-            print ("File exist ", bvec_file)
-        else:
-            print ("File not found ", bvec_file)
-            bvec_file = case_dir + '/' + case_prefix + 'bvecs'
-            if path.exists(bvec_file):
-                print ("File exist ", bvec_file)
-            else:
-                print ("File not found ", bvec_file)
-            sys.exit(1)
-
-        if path.exists(bval_file):
-            print ("File exist ", bval_file)
-        else:
-            print ("File not found ", bval_file)
-            bval_file = case_dir + '/' + case_prefix + 'bvals'
-            if path.exists(bval_file):
-                print ("File exist ", bval_file)
-            else:
-                print ("File not found ", bval_file)
-            sys.exit(1)
-
-        # dwiextract only works for nifti files
-        dwiextract = 'dwiextract -force -fslgrad ' + bvec_file + ' ' + bval_file + ' -bzero ' + \
-                      input_file + ' ' + output_file + ' &>/dev/null'
-        #dwiextract = 'dwiextract -force -fslgrad ' + bvec_file + ' ' + bval_file + ' -shell 900 ' + \
-        #              input_file + ' ' + output_file + ' &>/dev/null'
-
-        subprocess.check_output(dwiextract, shell=True)
-
-        bashCommand = 'mrmath -force ' + output_file + " mean " + output_file + " -axis 3" + ' &>/dev/null'
-
-    output = subprocess.check_output(bashCommand, shell=True)
-    return output_file
-
-
-# TODO this function is obsolete, remove in future
-def nhdr_to_nifti(Nhdr_file):
-    """
-    Parameters
-    ---------
-    Nhdr_file   : str
-                  Accepts nhdr filename in *.nhdr format
-    Returns
-    --------
-    output_file : str
-                  Converted nifti file which is stored in disk
-                  Uses "ConvertBetweenFilename" program
-    """
-    print ("Converting nhdr to nifti")
-    input_file = Nhdr_file
-    case_name = os.path.basename(input_file)
-    output_name = case_name[:len(case_name) - len(SUFFIX_NHDR)] + 'nii.gz'
-    output_file = os.path.join(os.path.dirname(input_file), output_name)
-    bashCommand = 'ConvertBetweenFileFormats ' + input_file + " " + output_file
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-    return output_file
-
-
 def normalize(b0_resampled):
     """
     Intensity based segmentation of MR images is hampered by radio frerquency field
@@ -226,6 +104,8 @@ def pre_process(input_file, reference_list, b0_threshold= None, which_bse= '--av
     from subprocess import Popen
 
     if os.path.isfile(input_file):
+        
+        print('Extracting bse of', input_file)
 
         # convert NRRD/NHDR to NIFIT as the first step
         # extract bse.py from just NIFTI later
