@@ -45,7 +45,7 @@ You need to have following in order for this library to work as expected
 
 ### Download model architecture, weights and IIT mean b0 template
 
-Download the following data and place them in model_folder/ directory
+Download the following data and place them under model_folder/ directory
 > Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
 
 > Trained Model Weights: https://drive.google.com/open?id=111x4xYxzDpUxlgNV83llpQdI3CxMVMdd
