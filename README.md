@@ -55,7 +55,9 @@ Download the following data and place them in model_folder/ directory
 ### Running the pipeline
 
 ##### Step1
-<python preprocessing.py -i subject/cases.txt -ref model_folder/IIT_mean_b0.nii.gz>
+```
+python preprocessing.py -i subject/cases.txt -ref model_folder/IIT_mean_b0.nii.gz
+```
 >> cases.txt should contain the full path to the diffusion volumes
 ##### Step 2
 > python dwi_masking -i subject/cases.txt -f model_folder/
