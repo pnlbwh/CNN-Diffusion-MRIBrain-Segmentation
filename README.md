@@ -36,12 +36,17 @@ You need to have following in order for this library to work as expected
 
 ## Installation
 
-### Install prerequisites
+### Install prerequisites for running the pipeline
 
 01) conda create -n myenv python=3.6
 02) conda activate myenv
 03) conda install -n myenv cudatoolkit=9.0
 04) conda install -n myenv cudnn=7.0.5
+05) pip install tensorflow==1.12.0
+06) pip install tensorflow-gpu==1.12.0
+07) pip install keras==2.2.4
+08) pip install nibabel
+09) pip install gputil
 
 ### Code Author
 * Raunak Dey - [raun1](https://github.com/raun1)
