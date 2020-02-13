@@ -34,6 +34,15 @@ You need to have following in order for this library to work as expected
 07)  cudatoolkit = 9.0
 08)  cudnn = 7.0.5
 
+## Installation
+
+### Install prerequisites
+
+conda create -n myenv python=3.6
+conda activate myenv
+conda install -n myenv cudatoolkit=9.0
+conda install -n myenv cudnn=7.0.5
+
 ### Code Author
 * Raunak Dey - [raun1](https://github.com/raun1)
 ### Model Architecture
