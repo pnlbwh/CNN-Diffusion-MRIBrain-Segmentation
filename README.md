@@ -52,6 +52,14 @@ Download the following data and place them in model_folder/ directory
 
 > Reference b0 Image: https://drive.google.com/open?id=1Mc8ZXCguRNl67wxY7z8EM9SMXGnt7VEc
 
+### Running the pipeline
+
+#### Step1
+> python preprocessing.py -i subject/cases.txt -ref model_folder/IIT_mean_b0.nii.gz
+#### Step 2
+> python dwi_masking -i subject/cases.txt -f model_folder/
+#### Step 3
+> pyhotn postprocessing -i subject/cases.txt
 
 ### Code Author
 * Raunak Dey - [raun1](https://github.com/raun1)
