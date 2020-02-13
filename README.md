@@ -58,8 +58,8 @@ Download the following data and place them under model_folder/ directory
 ```
 python preprocessing.py -i subject/cases.txt -ref model_folder/IITmean_b0_256.nii.gz
 ```
-">"">"">"Note: cases.txt should contain the full path to the diffusion volumes
-&ensp;&ensp;/home/pycharm/data/compnet/subject01/subject01_dwi.nii.gz
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: cases.txt should contain the full path to the diffusion volumes
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/home/pycharm/data/compnet/subject01/subject01_dwi.nii.gz
 ##### Step 2
 ```
 python dwi_masking -i subject/cases.txt -f model_folder/
