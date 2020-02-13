@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     02/05/2020
+# Last Updated:     02/12/2020
 # Purpose:          CNN diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -77,7 +77,7 @@ SUFFIX_TXT = "txt"
 output_mask = []
 
 
-def predict_mask(input_file, view='default', trained_folder):
+def predict_mask(input_file, trained_folder, view='default'):
     """
     Parameters
     ----------
@@ -154,6 +154,7 @@ if __name__ == '__main__':
                         help=" input caselist file in txt format")
     parser.add_argument('-f', action='store', dest='model_folder', type=str,
                         help=" folder which contain the trained model")
+
     args = parser.parse_args()
     mask_list = []
     if args.dwi:
@@ -175,9 +176,10 @@ if __name__ == '__main__':
     with open(merged_file) as f:
         merged_cases_npy = f.read().splitlines()
 
-    dwi_mask_sagittal = predict_mask(merged_cases_npy[0], view='sagittal', args.model_folder)
-    dwi_mask_coronal = predict_mask(merged_cases_npy[1], view='coronal', args.model_folder)
-    dwi_mask_axial = predict_mask(merged_cases_npy[2], view='axial', args.model_folder)
+    trained_model_folder = args.model_folder.rstrip('/')
+    dwi_mask_sagittal = predict_mask(merged_cases_npy[0], trained_model_folder, view='sagittal')
+    dwi_mask_coronal = predict_mask(merged_cases_npy[1], trained_model_folder, view='coronal')
+    dwi_mask_axial = predict_mask(merged_cases_npy[2], trained_model_folder, view='axial')
 
     mask_list.append(dwi_mask_sagittal)
     mask_list.append(dwi_mask_coronal)
