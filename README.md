@@ -42,11 +42,20 @@ You need to have following in order for this library to work as expected
 02) conda activate myenv
 03) conda install -n myenv cudatoolkit=9.0
 04) conda install -n myenv cudnn=7.0.5
-05) pip install tensorflow==1.12.0
-06) pip install tensorflow-gpu==1.12.0
-07) pip install keras==2.2.4
-08) pip install nibabel
-09) pip install gputil
+05) conda install -c aramislab ants=2.2.0
+06) pip install tensorflow==1.12.0
+07) pip install tensorflow-gpu==1.12.0
+08) pip install keras==2.2.4
+09) pip install nibabel
+10) pip install gputil
+
+### Download model architecture, weights and IIT template
+
+Download the following data and place them in model_folder/ directory
+Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
+Trained Model Weights: https://drive.google.com/open?id=111x4xYxzDpUxlgNV83llpQdI3CxMVMdd
+Reference b0 Image: https://drive.google.com/open?id=1Mc8ZXCguRNl67wxY7z8EM9SMXGnt7VEc
+
 
 ### Code Author
 * Raunak Dey - [raun1](https://github.com/raun1)
