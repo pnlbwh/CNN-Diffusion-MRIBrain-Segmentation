@@ -5,12 +5,6 @@
 The code for training, as well as the Trained Models are provided here.
 The model is trained on 1500 b0 diffusion volumes.
 
-> Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
-
-> Trained Model Weights: https://drive.google.com/open?id=111x4xYxzDpUxlgNV83llpQdI3CxMVMdd
-
-> Reference b0 Image: https://drive.google.com/open?id=1Mc8ZXCguRNl67wxY7z8EM9SMXGnt7VEc
-
 Let us know if you face any problems running the code by posting in Issues.
 
 If you use this code please cite:
@@ -52,9 +46,9 @@ You need to have following in order for this library to work as expected
 ### Download model architecture, weights and IIT template
 
 Download the following data and place them in model_folder/ directory
-Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
-Trained Model Weights: https://drive.google.com/open?id=111x4xYxzDpUxlgNV83llpQdI3CxMVMdd
-Reference b0 Image: https://drive.google.com/open?id=1Mc8ZXCguRNl67wxY7z8EM9SMXGnt7VEc
+> Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
+> Trained Model Weights: https://drive.google.com/open?id=111x4xYxzDpUxlgNV83llpQdI3CxMVMdd
+> Reference b0 Image: https://drive.google.com/open?id=1Mc8ZXCguRNl67wxY7z8EM9SMXGnt7VEc
 
 
 ### Code Author
