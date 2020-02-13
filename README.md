@@ -43,7 +43,7 @@ You need to have following in order for this library to work as expected
 09) pip install nibabel
 10) pip install gputil
 
-### Download model architecture, weights and IIT template
+### Download model architecture, weights and IIT mean b0 template
 
 Download the following data and place them in model_folder/ directory
 > Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
