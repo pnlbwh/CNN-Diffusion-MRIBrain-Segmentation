@@ -241,6 +241,7 @@ def clear(directory):
                 filename.endswith('_affinedMask.nii.gz') | filename.endswith('_originalMask.nii.gz') | \
                 filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz') | \
                 filename.endswith('-InverseWarped.nii.gz') | filename.endswith('-FilteredMask.nii.gz') | \
+                filename.endswith('cases_binary_a') | filename.endswith('cases_binary_c') | filename.endswith('cases_binary_s') | \
                 filename.endswith('_FilteredMask.nii.gz') | filename.endswith('-normalized.nii.gz'):
                 os.unlink(directory + '/' + filename)
 
@@ -381,7 +382,7 @@ if __name__ == '__main__':
     dwi_mask_sagittal = masked_cases_npy[0]
     dwi_mask_coronal = masked_cases_npy[1]
     dwi_mask_axial = masked_cases_npy[2]
-    
+
     transformed_file = storage + '/' + "ants_cases.txt"
     target_file = storage + '/' + "target_cases.txt"
     omat_file = storage + '/' + "mat_cases.txt"
