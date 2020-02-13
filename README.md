@@ -47,7 +47,9 @@ You need to have following in order for this library to work as expected
 
 Download the following data and place them in model_folder/ directory
 > Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
+
 > Trained Model Weights: https://drive.google.com/open?id=111x4xYxzDpUxlgNV83llpQdI3CxMVMdd
+
 > Reference b0 Image: https://drive.google.com/open?id=1Mc8ZXCguRNl67wxY7z8EM9SMXGnt7VEc
 
 
