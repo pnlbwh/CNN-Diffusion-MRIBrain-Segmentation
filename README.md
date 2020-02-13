@@ -28,8 +28,6 @@ You need to have following in order for this library to work as expected
 07)  cudatoolkit = 9.0
 08)  cudnn = 7.0.5
 
-## Installation
-
 ### Install prerequisites for running the pipeline
 
 01) conda create -n myenv python=3.6
@@ -69,9 +67,9 @@ python dwi_masking -i subject/cases.txt -f model_folder/
 python postprocessing -i subject/cases.txt
 ```
 
-### Code Author
+## Code Author
 * Raunak Dey - [raun1](https://github.com/raun1)
-### Model Architecture
+## Model Architecture
 The proposed networks are designed in the framework of encoder-decoder networks and have three pathways.
 > 1) Segmentation Branch - learns what is the brain tissue and to generate a brain mask 
 > 2) Complementary Branch - learns what is outside of the brain and to help the other
@@ -81,7 +79,7 @@ complementary branche and expects reasonable predictions from them as input to r
 ![Screenshot](https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/blob/master/CompNet%20Arch.png)
 
 
-### Multi View Aggregation step:
+## Multi View Aggregation step:
 > The approach is to train 3 separate networks for three principal axes ( Sagittal, Coronal and axial ) and 
 to perform multi-view aggregation step that combines segmentations from models trained on 2D slices along three principal axes: coronal, sagittal and axial. The final segmentation would be obtained by combining the probability maps from all three segmentation.
 ![Screenshot](https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/blob/master/Multiview.png)
