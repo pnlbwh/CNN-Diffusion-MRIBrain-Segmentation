@@ -8,7 +8,7 @@ from __future__ import division
 
 """
 pipeline.py
-~~~~~~~~~~
+~~~~~~~~~
 01)  Accepts the diffusion image in *.nhdr,*.nrrd,*.nii.gz,*.nii format
 02)  Checks if the Image axis is in the correct order for *.nhdr and *.nrrd file
 03)  Extracts b0 Image
@@ -32,6 +32,7 @@ from multiprocessing import Process, Manager, Value, Pool
 import multiprocessing as mp
 import sys
 from time import sleep
+from multiprocessing.dummy import Pool as ThreadPool
 
 # suffixes
 SUFFIX_NIFTI = "nii"
@@ -51,7 +52,6 @@ def normalize(b0_resampled):
     of the same tissue can vary between scans. The pixel value in images must be
     scaled prior to providing the images as input to CNN. The data is projected in to
     a predefined range [0,1]
-
     Parameters
     ---------
     b0_resampled : str
@@ -78,7 +78,7 @@ def normalize(b0_resampled):
     return output_file
 
 
-def ANTS_rigid_body_trans(b0_nii, reference=None):
+def ANTS_rigid_body_trans(b0_nii, result, reference=None):
 
     print("Performing ants rigid body transformation...")
     input_file = b0_nii
@@ -95,17 +95,29 @@ def ANTS_rigid_body_trans(b0_nii, reference=None):
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-Warped.nii.gz'
     transformed_file = os.path.join(os.path.dirname(input_file), output_name)
 
-    return (transformed_file, omat_file)
+    result.append((transformed_file, omat_file))
 
 
-def pre_process(input_file, reference_list, b0_threshold= None, which_bse= '--avg'):
+def remove_string(input_file, output_file):
+    infile = input_file
+    outfile = output_file
+    delete_list = ["-Warped"]
+    fin = open(infile)
+    fout = open(outfile, "w+")
+    for line in fin:
+        for word in delete_list:
+            line = line.replace(word, "")
+        fout.write(line)
+    fin.close()
+    fout.close()
+
+
+def pre_process(input_file, target_list, b0_threshold=None, which_bse= '--avg'):
 
     from conversion import nifti_write
     from subprocess import Popen
 
     if os.path.isfile(input_file):
-        
-        print('Extracting bse of', input_file)
 
         # convert NRRD/NHDR to NIFIT as the first step
         # extract bse.py from just NIFTI later
@@ -129,7 +141,7 @@ def pre_process(input_file, reference_list, b0_threshold= None, which_bse= '--av
         p = Popen(cmd, shell=True)
         p.wait()
 
-        reference_list.append((b0_nii))
+        target_list.append((b0_nii))
 
     else:
         print("File not found ", input_file)
@@ -149,6 +161,7 @@ if __name__ == '__main__':
                         help=" reference b0 file for registration")
 
     parser.add_argument('-nproc', type=int, dest='cr', default=8, help='number of processes to use')
+    
 
     try:
         args = parser.parse_args()
@@ -181,6 +194,7 @@ if __name__ == '__main__':
             #print(unique)
             storage = os.path.dirname(case_arr[0])
             tmp_path = storage + '/'
+            reference = str(args.ref)
 
             binary_file_s = storage + '/' + unique + '_binary_s'
             binary_file_c = storage + '/'+ unique + '_binary_c'
@@ -194,40 +208,49 @@ if __name__ == '__main__':
             y_dim = 256
             z_dim = 256
             transformed_cases = []
-            
+            """
+            Enable Multi core Processing for pre processing
+            manager provide a way to create data which can be shared between different processes
+            """
             with Manager() as manager:
-                reference_list = manager.list()
+                target_list = manager.list()
                 omat_list = []                
                 jobs = []
-
-                lock = mp.Lock()
                 for i in range(0,len(case_arr)):
-                    p = mp.Process(target=pre_process, args=(lock,case_arr[i],
-                                                             reference_list))
-                    p.start()
-                    jobs.append(p)
+                    p_process = mp.Process(target=pre_process, args=(case_arr[i],
+                                                             target_list))
+                    p_process.start()
+                    jobs.append(p_process)
         
                 for process in jobs:
                     process.join()
 
-                reference_list = list(reference_list)
-
+                target_list = list(target_list)
             """
             Enable Multi core Processing for ANTS Registration
+            manager provide a way to create data which can be shared between different processes
             """
-            p = Pool(processes=args.cr)
-            data = p.map(ANTS_rigid_body_trans, reference_list, args.ref)
-            p.close()
+            with Manager() as manager:
+                result = manager.list()              
+                ants_jobs = []
+                for i in range(0, len(target_list)):
+                    p_ants = mp.Process(target=ANTS_rigid_body_trans, args=(target_list[i],
+                                                             result, reference))
+                    ants_jobs.append(p_ants)
+                    p_ants.start()
+        
+                for process in ants_jobs:
+                    process.join()
 
-            for subject_ANTS in data:
+                result = list(result)
+
+            for subject_ANTS in result:
                 transformed_cases.append(subject_ANTS[0])
                 omat_list.append(subject_ANTS[1])
 
-            #print(transformed_cases)
-
-            p1 = Pool(processes=mp.cpu_count())
-            data_n = p1.map(normalize, transformed_cases)
-            p1.close()
+            pool_norm = Pool(processes=args.cr)
+            data_n = pool_norm.map(normalize, transformed_cases)
+            pool_norm.close()
             
             count = 0
             for b0_nifti in data_n:
@@ -243,13 +266,6 @@ if __name__ == '__main__':
                 print ("Case completed = ", count)
                 count += 1
 
-            shuffled_list = []
-            reference_new_list = []
-            for i in range(0, len(reference_list)):
-                reference_new_list.append(reference_list[i])
-                shuffled_list.append(reference_list[i])
-            reference_list = reference_new_list
-
             f_handle_s.close()
             f_handle_c.close()
             f_handle_a.close()
@@ -264,24 +280,19 @@ if __name__ == '__main__':
             merged_dwi_list.append(cases_file_c)
             merged_dwi_list.append(cases_file_a)
 
-            merge_s = np.memmap(binary_file_s, dtype=np.float32, mode='r+', shape=(256 * len(reference_list), y_dim, z_dim))
-            merge_c = np.memmap(binary_file_c, dtype=np.float32, mode='r+', shape=(256 * len(reference_list), y_dim, z_dim))
-            merge_a = np.memmap(binary_file_a, dtype=np.float32, mode='r+', shape=(256 * len(reference_list), y_dim, z_dim))
+            merge_s = np.memmap(binary_file_s, dtype=np.float32, mode='r+', shape=(256 * len(target_list), y_dim, z_dim))
+            merge_c = np.memmap(binary_file_c, dtype=np.float32, mode='r+', shape=(256 * len(target_list), y_dim, z_dim))
+            merge_a = np.memmap(binary_file_a, dtype=np.float32, mode='r+', shape=(256 * len(target_list), y_dim, z_dim))
 
             print ("Saving data to disk...")
             np.save(cases_file_s, merge_s)
             np.save(cases_file_c, merge_c)
             np.save(cases_file_a, merge_a)
 
-            shuffled_file = storage + '/' + "shulled_cases.txt"
             merged_file = storage + '/' + "merged_cases.txt"
             registered_file = storage + '/' + "ants_cases.txt"
             mat_file = storage + '/' + "mat_cases.txt"
-            reference_file = storage + '/' + "reference_cases.txt"
-
-            with open(shuffled_file, "w") as dwi_file_axial:
-                for item in shuffled_list:
-                    dwi_file_axial.write(item + "\n")
+            target_file = storage + '/' + "target_cases.txt"
 
             with open(merged_file, "w") as merged_dwi:
                 for item in merged_dwi_list:
@@ -295,9 +306,7 @@ if __name__ == '__main__':
                 for item in omat_list:
                     mat_dwi.write(item + "\n")
 
-            with open(reference_file, "w") as ref_dwi:
-                for item in reference_list:
-                    ref_dwi.write(item + "\n")
+            remove_string(registered_file, target_file)
 
             end_preprocessing_time = datetime.datetime.now()
             total_preprocessing_time = end_preprocessing_time - start_total_time
