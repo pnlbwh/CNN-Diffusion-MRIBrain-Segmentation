@@ -60,11 +60,11 @@ python preprocessing.py -i subject/cases.txt -ref model_folder/IITmean_b0_256.ni
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/home/pycharm/data/compnet/subject01/subject01_dwi.nii.gz
 ##### Step 2
 ```
-python dwi_masking -i subject/cases.txt -f model_folder/
+python dwi_masking.py -i subject/cases.txt -f model_folder/
 ```
 ##### Step 3
 ```
-python postprocessing -i subject/cases.txt
+python postprocessing.py -i subject/cases.txt
 ```
 
 ## Code Author
