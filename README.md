@@ -1,3 +1,13 @@
+# Citation
+
+If you use this software, please cite all of the following:
+
+Palanivelu S, Cetin Karayumak S, Billah T, Bouix S, Rathi Y, Convolutional Neural Network based Diffusion MRI Brain Segmentation, https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation, 2020, DOI: 10.5281/zenodo.3665739
+
+Raunak Dey, Yi Hong, C.2018 CompNet: Complementary Segmentation Network for Brain MRI Extraction . Accepted to MICCAI 2018 https://arxiv.org/abs/1804.00521
+
+Guha Roy, A., Conjeti, S., Navab, N., and Wachinger, C. 2018. QuickNAT: A Fully Convolutional Network for Quick and Accurate Segmentation of Neuroanatomy. Accepted for publication at NeuroImage, https://arxiv.org/abs/1801.04161
+
 # CompNet - Keras Implementation
 
 ## Tool:CompNet: Segmenting diffusion brain MRI
