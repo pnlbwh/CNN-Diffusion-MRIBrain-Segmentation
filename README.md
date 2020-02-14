@@ -28,6 +28,16 @@ You need to have following in order for this library to work as expected
 07)  cudatoolkit = 9.0
 08)  cudnn = 7.0.5
 
+### Python 3
+
+Download [Miniconda Python 3.6 bash installer](https://docs.conda.io/en/latest/miniconda.html) (32/64-bit based on your environment):
+    
+    sh Miniconda3-latest-Linux-x86_64.sh -b # -b flag is for license agreement
+
+Activate the conda environment:
+
+    source ~/miniconda3/bin/activate # should introduce '(base)' in front of each line
+    
 ### Install prerequisites for running the pipeline
 
 01) conda create -n myenv python=3.6
