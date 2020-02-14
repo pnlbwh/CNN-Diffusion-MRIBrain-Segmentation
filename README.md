@@ -40,16 +40,14 @@ Activate the conda environment:
     
 ### Install prerequisites for running the pipeline
 
-01) conda create -n myenv python=3.6
-02) conda activate myenv
-03) conda install -n myenv cudatoolkit=9.0
-04) conda install -n myenv cudnn=7.0.5
-05) conda install -n myenv -c aramislab ants=2.2.0
-06) pip install tensorflow==1.12.0
-07) pip install tensorflow-gpu==1.12.0
-08) pip install keras==2.2.4
-09) pip install nibabel
-10) pip install gputil
+01) conda install cudatoolkit=9.0
+02) conda install cudnn=7.0.5
+03) conda install -c aramislab ants=2.2.0
+04) pip install tensorflow==1.12.0
+05) pip install tensorflow-gpu==1.12.0
+06) pip install keras==2.2.4
+07) pip install nibabel
+18) pip install gputil
 
 ### Download model architecture, weights and IIT mean b0 template
 
