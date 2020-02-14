@@ -49,6 +49,19 @@ Activate the conda environment:
 07) pip install nibabel
 18) pip install gputil
 
+### Setting CUDA Path
+The NVIDIA graphics driver and CUDA compilier are already installed on machines that support CUDA. However, one must set environment variables in order to run and write CUDA enabled programs.
+
+If you use bash, add the following lines to the bottom of your .bashrc file:
+
+        # add cuda tools to command path
+        export PATH=/usr/local/cuda/bin:${PATH}
+
+        # add the CUDA binary and library directory to your LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-9.0/lib64
+  
+Log out and back in for the changes to take effect.
+
 ### Download model architecture, weights and IIT mean b0 template
 
 Download the following data and place them under model_folder/ directory
