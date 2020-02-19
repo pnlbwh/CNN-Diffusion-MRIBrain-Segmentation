@@ -42,7 +42,7 @@ Activate the conda environment:
 
 01) conda install cudatoolkit=9.0
 02) conda install cudnn=7.0.5
-03) conda install -c aramislab ants=2.2.0
+03) conda install -c pnlbwh ants
 04) pip install tensorflow==1.12.0
 05) pip install tensorflow-gpu==1.12.0
 06) pip install keras==2.2.4
