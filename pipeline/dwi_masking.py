@@ -446,7 +446,7 @@ def pre_process(input_file, target_list, b0_threshold=None, which_bse= '--avg'):
 
         b0_nii= os.path.join(directory, 'dwib0_'+ os.path.basename(input_file))
 
-        cmd = (' ').join(['/rfanfs/pnl-zorro/software/pnlpipe3/pnlNipype/scripts/bse.py',
+        cmd = (' ').join(['bse.py',
                   '-i', input_file,
                   '--bvals', inPrefix+'.bval',
                   '-o', b0_nii,
