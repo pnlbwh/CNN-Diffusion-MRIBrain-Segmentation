@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     02/12/2020
+# Last Updated:     02/25/2020
 # Purpose:          Pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -446,7 +446,7 @@ def pre_process(input_file, target_list, b0_threshold=None, which_bse= '--avg'):
 
         b0_nii= os.path.join(directory, 'dwib0_'+ os.path.basename(input_file))
 
-        cmd = (' ').join(['bse.py',
+        cmd = (' ').join(['/rfanfs/pnl-zorro/software/pnlpipe3/pnlNipype/scripts/bse.py',
                   '-i', input_file,
                   '--bvals', inPrefix+'.bval',
                   '-o', b0_nii,
@@ -463,6 +463,7 @@ def pre_process(input_file, target_list, b0_threshold=None, which_bse= '--avg'):
         print("File not found ", input_file)
         sys.exit(1)
 
+
 def remove_string(input_file, output_file):
     infile = input_file
     outfile = output_file
@@ -476,10 +477,11 @@ def remove_string(input_file, output_file):
     fin.close()
     fout.close()
 
-def quality_control(mask_list, shuffled_list, tmp_path, view='default'):
-'''The slicesdir command takes the list of images and creates a simple web-page containing snapshots for each of the images. 
-    Once it has finished running it tells you the name of the web page to open in your web browser, to view the snapshots'''
 
+def quality_control(mask_list, shuffled_list, tmp_path, view='default'):
+
+    '''The slicesdir command takes the list of images and creates a simple web-page containing snapshots for each of the images. 
+    Once it has finished running it tells you the name of the web page to open in your web browser, to view the snapshots'''
     slices = " "
     for i in range(0, len(mask_list)):
         str1 = shuffled_list[i]
@@ -504,9 +506,6 @@ if __name__ == '__main__':
 
     parser.add_argument('-i', action='store', dest='dwi', type=str,
                         help=" input caselist file in txt format")
-
-    parser.add_argument('-ref', action='store', dest='ref', type=str,
-                        help=" reference b0 file for registration")
 
     parser.add_argument('-f', action='store', dest='model_folder', type=str,
                         help=" folder which contain the trained model")
@@ -556,7 +555,8 @@ if __name__ == '__main__':
             #print(unique)
             storage = os.path.dirname(case_arr[0])
             tmp_path = storage + '/'
-            reference = str(args.ref)
+            trained_model_folder = args.model_folder.rstrip('/')
+            reference = trained_model_folder + '/IITmean_b0_256.nii.gz'
 
             binary_file_s = storage + '/' + unique + '_binary_s'
             binary_file_c = storage + '/'+ unique + '_binary_c'
@@ -670,7 +670,6 @@ if __name__ == '__main__':
             print ("Pre-Processing Time Taken : ", round(int(total_preprocessing_time.seconds)/60, 2), " min")
 
             # DWI Deep Learning Segmentation
-            trained_model_folder = args.model_folder.rstrip('/')
             dwi_mask_sagittal = predict_mask(cases_file_s, trained_model_folder, view='sagittal')
             dwi_mask_coronal = predict_mask(cases_file_c, trained_model_folder, view='coronal')
             dwi_mask_axial = predict_mask(cases_file_a, trained_model_folder, view='axial')
