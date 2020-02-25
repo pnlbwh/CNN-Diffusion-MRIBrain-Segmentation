@@ -41,7 +41,9 @@ Activate the conda environment:
 ### Install prerequisites for running the pipeline
 
 #### For CPU
-01) pip install tensorflow==1.12.0
+01) conda install cudatoolkit=9.0
+02) conda install cudnn=7.0.5
+03) pip install tensorflow==1.12.0
 
 #### For GPU
 01) conda install cudatoolkit=9.0
