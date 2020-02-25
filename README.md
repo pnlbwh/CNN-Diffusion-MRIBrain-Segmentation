@@ -40,14 +40,19 @@ Activate the conda environment:
     
 ### Install prerequisites for running the pipeline
 
+#### For CPU
+01) pip install tensorflow==1.12.0
+
+### For GPU
 01) conda install cudatoolkit=9.0
 02) conda install cudnn=7.0.5
-03) conda install -c pnlbwh ants
-04) pip install tensorflow==1.12.0
-05) pip install tensorflow-gpu==1.12.0
-06) pip install keras==2.2.4
-07) pip install nibabel
-18) pip install gputil
+03) pip install tensorflow-gpu==1.12.0
+
+### For Either CPU or GPU
+01) conda install -c pnlbwh ants
+02) pip install keras==2.2.4
+03) pip install nibabel
+14) pip install gputil
 
 ### Setting CUDA Path
 The NVIDIA graphics driver and CUDA compilier are already installed on machines that support CUDA. However, one must set environment variables in order to run and write CUDA enabled programs.
