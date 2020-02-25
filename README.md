@@ -23,8 +23,8 @@ You need to have following in order for this library to work as expected
 02)  pip >= 19.0
 03)  numpy >= 1.16.4
 04)  nibabel >= 2.2.1
-05)  tensorflow-gpu = 1.12.0
-06)  keras = 2.2.4
+05)  tensorflow-gpu >= 1.12.0
+06)  keras >= 2.2.4
 07)  cudatoolkit = 9.0
 08)  cudnn = 7.0.5
 
