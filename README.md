@@ -43,12 +43,12 @@ Activate the conda environment:
 #### For CPU
 01) pip install tensorflow==1.12.0
 
-### For GPU
+#### For GPU
 01) conda install cudatoolkit=9.0
 02) conda install cudnn=7.0.5
 03) pip install tensorflow-gpu==1.12.0
 
-### For Either CPU or GPU
+#### For Either CPU or GPU
 01) conda install -c pnlbwh ants
 02) pip install keras==2.2.4
 03) pip install nibabel
