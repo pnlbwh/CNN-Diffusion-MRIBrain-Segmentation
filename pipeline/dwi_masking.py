@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     02/12/2020
+# Last Updated:     02/27/2020
 # Purpose:          Pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -524,7 +524,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-qc", type=str2bool, dest='qc', nargs='?',
                         const=True, default=False,
-                        help="generate snapshots (yes/true/y/1)")
+                        help="open snapshots in your web browser (yes/true/y/1)")
 
     parser.add_argument('-nproc', type=int, dest='cr', default=8, help='number of processes to use')
 
@@ -720,8 +720,6 @@ if __name__ == '__main__':
 
                 print ("Mask file : ", brain_mask_multi)
                 multi_mask.append(brain_mask_multi[0])
-
-            if args.qc:
                 quality_control(multi_mask, target_list, tmp_path, view='multi')
 
             if args.Sagittal:
@@ -737,9 +735,7 @@ if __name__ == '__main__':
                                             reference=target_list,
                                             omat=omat)
                 list_masks(sagittal_mask, view='sagittal')
-
-                if args.qc:
-                    quality_control(sagittal_mask, target_list, tmp_path, view='sagittal')
+                quality_control(sagittal_mask, target_list, tmp_path, view='sagittal')
 
             if args.Coronal:
                 omat = omat_list
@@ -754,8 +750,7 @@ if __name__ == '__main__':
                                           reference=target_list,
                                           omat=omat)
                 list_masks(coronal_mask, view='coronal')
-                if args.qc:
-                    quality_control(coronal_mask, target_list, tmp_path, view='coronal')
+                quality_control(coronal_mask, target_list, tmp_path, view='coronal')
 
             if args.Axial:
                 omat = omat_list
@@ -770,8 +765,7 @@ if __name__ == '__main__':
                                          reference=target_list,
                                          omat=omat)
                 list_masks(axial_mask, view='axial')
-                if args.qc:
-                    quality_control(axial_mask, target_list, tmp_path, view='axial')
+                quality_control(axial_mask, target_list, tmp_path, view='axial')
 
             for i in range(0, len(cases_mask_sagittal)):
                 clear(os.path.dirname(cases_mask_sagittal[i]))
