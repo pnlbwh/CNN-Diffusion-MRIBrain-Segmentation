@@ -88,6 +88,7 @@ python dwi_masking.py -i cases.txt -f model_folder
 ```
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: cases.txt should contain the full path to the diffusion volumes
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/home/pycharm/data/compnet/subject01/subject01_dwi.nii.gz
+
 Mask is saved under each subjects corresponding directory with name `dwib0_{PREFIX}-multi_BrainMask.nii.gz`
 
 ## Code Author
