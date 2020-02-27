@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     02/25/2020
+# Last Updated:     02/12/2020
 # Purpose:          Pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -522,6 +522,10 @@ if __name__ == '__main__':
                         const=True, default=False,
                         help="generate sagittal Mask (yes/true/y/1)")
 
+    parser.add_argument("-qc", type=str2bool, dest='qc', nargs='?',
+                        const=True, default=False,
+                        help="generate snapshots (yes/true/y/1)")
+
     parser.add_argument('-nproc', type=int, dest='cr', default=8, help='number of processes to use')
 
     try:
@@ -717,7 +721,8 @@ if __name__ == '__main__':
                 print ("Mask file : ", brain_mask_multi)
                 multi_mask.append(brain_mask_multi[0])
 
-            quality_control(multi_mask, target_list, tmp_path, view='multi')
+            if args.qc:
+                quality_control(multi_mask, target_list, tmp_path, view='multi')
 
             if args.Sagittal:
                 omat = omat_list
@@ -725,7 +730,6 @@ if __name__ == '__main__':
                 omat = None
 
             if args.Sagittal:
-               
                 sagittal_mask = npy_to_nhdr(transformed_cases, 
                                             cases_mask_sagittal, 
                                             target_list,
@@ -733,7 +737,9 @@ if __name__ == '__main__':
                                             reference=target_list,
                                             omat=omat)
                 list_masks(sagittal_mask, view='sagittal')
-                quality_control(sagittal_mask, target_list, tmp_path, view='sagittal')
+
+                if args.qc:
+                    quality_control(sagittal_mask, target_list, tmp_path, view='sagittal')
 
             if args.Coronal:
                 omat = omat_list
@@ -741,7 +747,6 @@ if __name__ == '__main__':
                 omat = None
 
             if args.Coronal:
-           
                 coronal_mask = npy_to_nhdr(transformed_cases, 
                                           cases_mask_coronal, 
                                           target_list,
@@ -749,7 +754,8 @@ if __name__ == '__main__':
                                           reference=target_list,
                                           omat=omat)
                 list_masks(coronal_mask, view='coronal')
-                quality_control(coronal_mask, target_list, tmp_path, view='coronal')
+                if args.qc:
+                    quality_control(coronal_mask, target_list, tmp_path, view='coronal')
 
             if args.Axial:
                 omat = omat_list
@@ -757,7 +763,6 @@ if __name__ == '__main__':
                 omat = None
 
             if args.Axial:
-           
                 axial_mask = npy_to_nhdr(transformed_cases, 
                                          cases_mask_axial, 
                                          target_list,
@@ -765,18 +770,20 @@ if __name__ == '__main__':
                                          reference=target_list,
                                          omat=omat)
                 list_masks(axial_mask, view='axial')
-                quality_control(axial_mask, target_list, tmp_path, view='axial')
+                if args.qc:
+                    quality_control(axial_mask, target_list, tmp_path, view='axial')
 
             for i in range(0, len(cases_mask_sagittal)):
                 clear(os.path.dirname(cases_mask_sagittal[i]))
 
-            webbrowser.open(os.path.join(tmp_path, 'slicesdir_multi/index.html'))
-            if args.Sagittal:
-                webbrowser.open(os.path.join(tmp_path, 'slicesdir_sagittal/index.html'))
-            if args.Coronal:
-                webbrowser.open(os.path.join(tmp_path, 'slicesdir_coronal/index.html'))
-            if args.Axial:
-                webbrowser.open(os.path.join(tmp_path, 'slicesdir_axial/index.html'))
+            if args.qc:
+                webbrowser.open(os.path.join(tmp_path, 'slicesdir_multi/index.html'))
+                if args.Sagittal:
+                    webbrowser.open(os.path.join(tmp_path, 'slicesdir_sagittal/index.html'))
+                if args.Coronal:
+                    webbrowser.open(os.path.join(tmp_path, 'slicesdir_coronal/index.html'))
+                if args.Axial:
+                    webbrowser.open(os.path.join(tmp_path, 'slicesdir_axial/index.html'))
 
         end_total_time = datetime.datetime.now()
         total_t = end_total_time - start_total_time
