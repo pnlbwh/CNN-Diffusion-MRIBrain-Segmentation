@@ -480,8 +480,6 @@ def remove_string(input_file, output_file):
 
 def quality_control(mask_list, shuffled_list, tmp_path, view='default'):
 
-    '''The slicesdir command takes the list of images and creates a simple web-page containing snapshots for each of the images. 
-    Once it has finished running it tells you the name of the web page to open in your web browser, to view the snapshots'''
     slices = " "
     for i in range(0, len(mask_list)):
         str1 = shuffled_list[i]
@@ -512,15 +510,15 @@ if __name__ == '__main__':
 
     parser.add_argument("-a", type=str2bool, dest='Axial', nargs='?',
                         const=True, default=False,
-                        help="generate axial Mask (yes/true/y/1)")
+                        help="Advanced option to generate multiview and axial Mask (yes/true/y/1)")
 
     parser.add_argument("-c", type=str2bool, dest='Coronal', nargs='?',
                         const=True, default=False,
-                        help="generate coronal Mask (yes/true/y/1)")
+                        help="Advanced option to generate multiview and coronal Mask (yes/true/y/1)")
 
     parser.add_argument("-s", type=str2bool, dest='Sagittal', nargs='?',
                         const=True, default=False,
-                        help="generate sagittal Mask (yes/true/y/1)")
+                        help="Advanced option to generate multiview and sagittal Mask (yes/true/y/1)")
 
     parser.add_argument("-qc", type=str2bool, dest='qc', nargs='?',
                         const=True, default=False,
