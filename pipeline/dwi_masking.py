@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     02/27/2020
+# Last Updated:     02/28/2020
 # Purpose:          Pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -233,7 +233,7 @@ def save_nifti(fname, data, affine=None, hdr=None):
     result_img.to_filename(fname)
 
 
-def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, view='default', reference='default', omat=None):
+def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', reference='default', omat=None):
     """
     Parameters
     ---------
@@ -273,12 +273,12 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, view='default', r
         nib.save(image_predict, output_file)
 
         output_file_inverseMask = ANTS_inverse_transform(output_file, reference[i], omat[i])
-        output_file = output_file_inverseMask
+        Ants_inverse_output_file = output_file_inverseMask
 
-        case_name = os.path.basename(output_file)
+        case_name = os.path.basename(Ants_inverse_output_file)
         fill_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-filled.nii.gz'
         filled_file = os.path.join(output_dir, fill_name)
-        fill_cmd = "ImageMath 3 " + filled_file + " FillHoles " + output_file
+        fill_cmd = "ImageMath 3 " + filled_file + " FillHoles " + Ants_inverse_output_file
         process = subprocess.Popen(fill_cmd.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
@@ -289,16 +289,16 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, view='default', r
             format = SUFFIX_NIFTI
 
         # Neural Network Predicted Mask
-        output_nhdr = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_originalMask.nii.gz'
-        output_folder = os.path.join(output_dir, output_nhdr)
-        bashCommand = 'mv ' + filled_file + " " + output_folder
+        CNN_predict_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_originalMask.nii.gz'
+        CNN_output_file = os.path.join(output_dir, CNN_predict_file)
+        bashCommand = 'mv ' + filled_file + " " + CNN_output_file
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
-        output_filter_folder = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_FilteredMask.nii.gz'
-        output_mask_filtered = os.path.join(output_dir, output_filter_folder)
+        output_filter_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_FilteredMask.nii.gz'
+        output_mask_filtered = os.path.join(output_dir, output_filter_file)
 
-        mask_filter = "maskfilter -force " + output_folder + " -scale 2 clean " + output_mask_filtered
+        mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
         process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
@@ -306,11 +306,11 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, view='default', r
         data_dwi = nib.load(sub_name[i])
         imgU16 = img.get_data().astype(np.int16)
 
-        output_folder_final = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
-        output_mask_final = os.path.join(output_dir, output_folder_final)
+        brain_mask_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
+        brain_mask_final = os.path.join(output_dir, brain_mask_file)
 
-        save_nifti(output_mask_final, imgU16, affine=data_dwi.affine, hdr=data_dwi.header)
-        output_mask.append(output_mask_final)
+        save_nifti(brain_mask_final, imgU16, affine=data_dwi.affine, hdr=data_dwi.header)
+        output_mask.append(brain_mask_final)
 
     return output_mask
 
@@ -478,11 +478,11 @@ def remove_string(input_file, output_file):
     fout.close()
 
 
-def quality_control(mask_list, shuffled_list, tmp_path, view='default'):
+def quality_control(mask_list, target_list, tmp_path, view='default'):
 
     slices = " "
     for i in range(0, len(mask_list)):
-        str1 = shuffled_list[i]
+        str1 = target_list[i]
         str2 = mask_list[i]
         slices += str1 + " " + str2 + " "
     
@@ -520,7 +520,7 @@ if __name__ == '__main__':
                         const=True, default=False,
                         help="Advanced option to generate multiview and sagittal Mask (yes/true/y/1)")
 
-    parser.add_argument("-qc", type=str2bool, dest='qc', nargs='?',
+    parser.add_argument("-qc", type=str2bool, dest='snap', nargs='?',
                         const=True, default=False,
                         help="open snapshots in your web browser (yes/true/y/1)")
 
@@ -708,7 +708,7 @@ if __name__ == '__main__':
                                                   input_file)
 
 
-                brain_mask_multi = npy_to_nhdr(list(transformed_cases[i].split()), 
+                brain_mask_multi = npy_to_nifti(list(transformed_cases[i].split()), 
                                                 list(multi_view_mask.split()), 
                                                 list(target_list[i].split()),
                                                 view='multi', 
@@ -718,7 +718,7 @@ if __name__ == '__main__':
 
                 print ("Mask file : ", brain_mask_multi)
                 multi_mask.append(brain_mask_multi[0])
-                quality_control(multi_mask, target_list, tmp_path, view='multi')
+            quality_control(multi_mask, target_list, tmp_path, view='multi')
 
             if args.Sagittal:
                 omat = omat_list
@@ -726,7 +726,7 @@ if __name__ == '__main__':
                 omat = None
 
             if args.Sagittal:
-                sagittal_mask = npy_to_nhdr(transformed_cases, 
+                sagittal_mask = npy_to_nifti(transformed_cases, 
                                             cases_mask_sagittal, 
                                             target_list,
                                             view='sagittal', 
@@ -741,7 +741,7 @@ if __name__ == '__main__':
                 omat = None
 
             if args.Coronal:
-                coronal_mask = npy_to_nhdr(transformed_cases, 
+                coronal_mask = npy_to_nifti(transformed_cases, 
                                           cases_mask_coronal, 
                                           target_list,
                                           view='coronal', 
@@ -756,7 +756,7 @@ if __name__ == '__main__':
                 omat = None
 
             if args.Axial:
-                axial_mask = npy_to_nhdr(transformed_cases, 
+                axial_mask = npy_to_nifti(transformed_cases, 
                                          cases_mask_axial, 
                                          target_list,
                                          view='axial', 
@@ -768,7 +768,7 @@ if __name__ == '__main__':
             for i in range(0, len(cases_mask_sagittal)):
                 clear(os.path.dirname(cases_mask_sagittal[i]))
 
-            if args.qc:
+            if args.snap:
                 webbrowser.open(os.path.join(tmp_path, 'slicesdir_multi/index.html'))
                 if args.Sagittal:
                     webbrowser.open(os.path.join(tmp_path, 'slicesdir_sagittal/index.html'))
