@@ -1,4 +1,0 @@
-ImageMath - To fill holes after brain mask prediction
-ANTs = 2.2.0 ( To perform Image Registration )
-gputil = 1.4.0 ( https://github.com/anderskm/gputil )
-pnlNipype (https://github.com/pnlbwh/pnlNipype)
