@@ -457,12 +457,12 @@ def pre_process(input_file, target_list, b0_threshold=50., which_bse= '--avg'):
         
         print("Extracting b0 volume...")
         
-        img= nib.load(input_file)
+        dwi= nib.load(input_file)
         bvals= np.array(read_bvals(input_file.split('.nii')[0]+ '.bval'))
         where_b0= np.where(bvals <= b0_threshold)[0]
-        b0= img.get_data()[...,where_b0].mean(-1)
+        b0= dwi.get_data()[...,where_b0].mean(-1)
         np.nan_to_num(b0).clip(min= 0., out= b0)
-        nib.Nifti1Image(b0, affine= img.affine, header= img.header).to_filename(b0_nii)
+        nib.Nifti1Image(b0, affine= dwi.affine, header= dwi.header).to_filename(b0_nii)
         
         '''
         cmd = (' ').join(['bse.py',
