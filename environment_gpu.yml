@@ -12,6 +12,7 @@ dependencies:
     - keras==2.2.4
     - numpy==1.16.4
     - nibabel==2.2.1
+    - scikit-image==0.16.2
     - ants
     - pip
     - pip:
