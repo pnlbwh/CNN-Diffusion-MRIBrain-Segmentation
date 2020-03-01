@@ -92,10 +92,7 @@ are provided to facilitate creation of `dmri_seg` conda environment.
 ### GPU support
 
 > conda env create -f environment_gpu.yml
-    
-    ### Install prerequisites for running the pipeline
-
-    
+       
 Finally, activate the conda environment using:
 
     conda activate dmri_seg
@@ -156,7 +153,9 @@ However, you can train a model on your own data using this software.
 ## 1. Model Architecture
 
 The code is written by Raunak Dey available at 
+
 https://github.com/raun1/MICCAI2018---Complementary_Segmentation_Network-Raw-Code. 
+
 In summary, his proposed architecture is designed in the framework of encoder-decoder networks and have three pathways.
 
 * Segmentation Branch - learns what is the brain tissue and to generate a brain mask 
