@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from __future__ import division
 # -----------------------------------------------------------------
 # Author:       Senthil Palanivelu, Tashrif Billah                 
@@ -434,9 +436,9 @@ def list_masks(mask_list, view='default'):
         print (view + " Mask file = ", mask_list[i])
 
 
-def pre_process(input_file, target_list, b0_threshold=None, which_bse= '--avg'):
+def pre_process(input_file, target_list, b0_threshold=50., which_bse= '--avg'):
 
-    from conversion import nifti_write
+    from conversion import nifti_write, read_bvals
     from subprocess import Popen
 
     if os.path.isfile(input_file):
@@ -452,18 +454,28 @@ def pre_process(input_file, target_list, b0_threshold=None, which_bse= '--avg'):
         inPrefix= input_file.split('.nii')[0]
 
         b0_nii= os.path.join(directory, 'dwib0_'+ os.path.basename(input_file))
-
+        
+        print("Extracting b0 volume...")
+        
+        img= nib.load(input_file)
+        bvals= np.array(read_bvals(input_file.split('.nii')[0]+ '.bval'))
+        where_b0= np.where(bvals <= b0_threshold)[0]
+        b0= img.get_data()[...,where_b0].mean(-1)
+        np.nan_to_num(b0).clip(min= 0., out= b0)
+        nib.Nifti1Image(b0, affine= img.affine, header= img.header).to_filename(b0_nii)
+        
+        '''
         cmd = (' ').join(['bse.py',
                   '-i', input_file,
                   '--bvals', inPrefix+'.bval',
                   '-o', b0_nii,
                   f'-t {b0_threshold}' if b0_threshold else '',
                   which_bse])
-
-        print("Extracting b0 volume...")
+        
         p = Popen(cmd, shell=True)
         p.wait()
-
+        '''
+        
         target_list.append((b0_nii))
 
     else:
