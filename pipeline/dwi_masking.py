@@ -47,7 +47,11 @@ except:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     print("GPU not available...")
 
-import tensorflow as tf
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    import tensorflow as tf
+
 import multiprocessing as mp
 import re
 import sys
