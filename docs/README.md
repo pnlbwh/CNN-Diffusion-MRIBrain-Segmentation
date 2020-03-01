@@ -1,35 +1,35 @@
-![](doc/pnl-bwh-hms.png)
+![](pnl-bwh-hms.png)
 
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.3665739.svg)](https://doi.org/10.5281/zenodo.3665739) [![Python](https://img.shields.io/badge/Python-3.6-green.svg)]() [![Platform](https://img.shields.io/badge/Platform-linux--64%20%7C%20osx--64-orange.svg)]()
 
 *CNN-Diffusion-MRIBrain-Segmentation* repository is developed by Senthil Palanivelu, Suheyla Cetin Karayumak, Tashrif Billah, Sylvain Bouix, and Yogesh Rathi, 
 Brigham and Women's Hospital (Harvard Medical School).
 
-
 Table of Contents
 =================
 
+   * [Table of Contents](#table-of-contents)
    * [Segmenting diffusion brain MRI](#segmenting-diffusion-brain-mri)
    * [Citation](#citation)
    * [Dependencies](#dependencies)
    * [Installation](#installation)
-      * [Python 3](#python-3)
-      * [Conda environment](#conda-environment)
+      * [1. Python 3](#1-python-3)
+      * [2. Conda environment](#2-conda-environment)
          * [CPU only](#cpu-only)
          * [GPU support](#gpu-support)
-      * [CUDA environment](#cuda-environment)
-      * [Download models](#download-models)
+      * [3. CUDA environment](#3-cuda-environment)
+      * [4. Download models](#4-download-models)
    * [Running the pipeline](#running-the-pipeline)
       * [Prediction](#prediction)
       * [Training](#training)
    * [Method](#method)
-      * [Model Architecture](#model-architecture)
-      * [Multi View Aggregation step:](#multi-view-aggregation-step)
-      * [Clean up mask](#clean-up-mask)
+      * [1. Model Architecture](#1-model-architecture)
+      * [2. Multi View Aggregation:](#2-multi-view-aggregation)
+      * [3. Clean up](#3-clean-up)
    * [Issues](#issues)
    * [Reference](#reference)
 
-Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+Table of contents created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 
 # Segmenting diffusion brain MRI
@@ -69,7 +69,7 @@ NeuroImage 186 (2019): 713-727.
 
 # Installation
 
-## Python 3
+## 1. Python 3
 
 Download [Miniconda Python 3 bash installer](https://docs.conda.io/en/latest/miniconda.html) (32/64-bit based on your environment):
     
@@ -82,7 +82,7 @@ Activate the conda environment:
 The software is written intelligently to work with or without GPU support. Two *yml* environment files 
 are provided to facilitate creation of `dmri_seg` conda environment.
    
-## Conda environment
+## 2. Conda environment
    
 ### CPU only
 
@@ -101,7 +101,7 @@ Finally, activate the conda environment using:
     conda activate dmri_seg
     
 
-## CUDA environment
+## 3. CUDA environment
 
 When you have GPU support, provided that you used `environment_gpu.yml` for creating conda environment, 
 you should set environment variables in order to run and write CUDA enabled programs. 
@@ -118,7 +118,7 @@ If you use bash, add the following lines to the bottom of your `~/.bashrc` file:
 Open a new terminal for the changes to take effect.
 
 
-## Download models
+## 4. Download models
 
 Download model architecture, weights and IIT mean b0 template from https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases 
 as follows:
@@ -153,35 +153,38 @@ However, you can train a model on your own data using this software.
 
 # Method
 
-## Model Architecture
+## 1. Model Architecture
 
-The code is written by Raunak Dey available at https://github.com/raun1/MICCAI2018---Complementary_Segmentation_Network-Raw-Code. 
+The code is written by Raunak Dey available at 
+https://github.com/raun1/MICCAI2018---Complementary_Segmentation_Network-Raw-Code. 
 In summary, his proposed architecture is designed in the framework of encoder-decoder networks and have three pathways.
 
-* 1) Segmentation Branch - learns what is the brain tissue and to generate a brain mask 
+* Segmentation Branch - learns what is the brain tissue and to generate a brain mask 
 
-* 2) Complementary Branch - learns what is outside of the brain and to help the other
+* Complementary Branch - learns what is outside of the brain and to help the other
 branch generate brain mask
 
-* 3) Reconstruction Branch - It provides direct feedback to the segmentation and
+* Reconstruction Branch - It provides direct feedback to the segmentation and
 complementary branche and expects reasonable predictions from them as input to reconstruct the original input image.
 
 ![](CompNet.png)
 
+**TBD source of picture**
 
-## Multi View Aggregation step:
+## 2. Multi View Aggregation:
 
 The approach is to train three separate networks for three principal axes ( Sagittal, Coronal and axial ) and 
 to perform multi-view aggregation step that combines segmentations from models trained on 2D slices along three principal axes: 
 coronal, sagittal and axial. The final segmentation is obtained by combining the probability maps from all three segmentation.
 
 ![](Multiview.png)
+**TBD source of picture**
 
 
-See **TBD multi view** for details
+See **TBD multi view reference** for details
 
 
-## Clean up mask
+## 3. Clean up
 
 The aggregated mask is cleaned up using a [Python translated version](../src/maskfilter) of [maskfilter from mrtrix](https://mrtrix.readthedocs.io/en/latest/reference/commands/maskfilter.html). 
 In brief, there remain islands of non brain region in the aggregated mask. The above filter applies a series of morphological 
@@ -205,5 +208,5 @@ NeuroImage 186 (2019): 713-727.
 DOI: 10.5281/zenodo.2584003
 
 
-* **TBD multi view**
+* **TBD multi view reference**
 
