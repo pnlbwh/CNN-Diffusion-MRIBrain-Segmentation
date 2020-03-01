@@ -303,7 +303,9 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
         output_filter_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_FilteredMask.nii.gz'
         output_mask_filtered = os.path.join(output_dir, output_filter_file)
 
-        mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
+        print('Cleaning up ', CNN_output_file)
+        # mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
+        mask_filter = os.path.join(os.path.dirname(__file__),'../src/maskfilter') + f' {CNN_output_file} 2 {output_mask_filtered}'
         process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
