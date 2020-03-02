@@ -575,9 +575,9 @@ if __name__ == '__main__':
             trained_model_folder = args.model_folder.rstrip('/')
             reference = trained_model_folder + '/IITmean_b0_256.nii.gz'
 
-            binary_file_s = storage + '/' + unique + '_binary_s'
-            binary_file_c = storage + '/'+ unique + '_binary_c'
-            binary_file_a = storage + '/'+ unique + '_binary_a'
+            binary_file_s = storage + '/' + unique + '_' + str(os.getpid()) + '_binary_s'
+            binary_file_c = storage + '/' + unique + '_' + str(os.getpid()) + '_binary_c'
+            binary_file_a = storage + '/' + unique + '_' + str(os.getpid()) + '_binary_a'
 
             f_handle_s = open(binary_file_s, 'wb')
             f_handle_c = open(binary_file_c, 'wb')
@@ -650,9 +650,9 @@ if __name__ == '__main__':
             f_handle_a.close()
 
             print ("Merging npy files...")
-            cases_file_s = storage + '/'+ unique + '-casefile-sagittal.npy'
-            cases_file_c = storage + '/'+ unique + '-casefile-coronal.npy'
-            cases_file_a = storage + '/'+ unique + '-casefile-axial.npy'
+            cases_file_s = storage + '/'+ unique + '_' + str(os.getpid()) + '-casefile-sagittal.npy'
+            cases_file_c = storage + '/'+ unique + '_' + str(os.getpid()) + '-casefile-coronal.npy'
+            cases_file_a = storage + '/'+ unique + '_' + str(os.getpid()) + '-casefile-axial.npy'
 
             merged_dwi_list = []
             merged_dwi_list.append(cases_file_s)
@@ -668,9 +668,9 @@ if __name__ == '__main__':
             np.save(cases_file_c, merge_c)
             np.save(cases_file_a, merge_a)
 
-            registered_file = storage + '/' + "ants_cases.txt"
-            mat_file = storage + '/' + "mat_cases.txt"
-            target_file = storage + '/' + "target_cases.txt"
+            registered_file = storage + "/ants_cases_" + str(os.getpid()) + ".txt"
+            mat_file = storage + "/mat_cases_" + str(os.getpid()) + ".txt"
+            target_file = storage + "/target_cases_" + str(os.getpid()) + ".txt"
 
             with open(registered_file, "w") as reg_dwi:
                 for item in transformed_cases:
@@ -695,9 +695,9 @@ if __name__ == '__main__':
             total_masking_time = end_masking_time - start_total_time - total_preprocessing_time
             print ("Masking Time Taken : ", round(int(total_masking_time.seconds)/60, 2), " min")
 
-            transformed_file = storage + '/' + "ants_cases.txt"
-            target_file = storage + '/' + "target_cases.txt"
-            omat_file = storage + '/' + "mat_cases.txt"
+            transformed_file = registered_file
+            omat_file = mat_file
+
             transformed_cases = [line.rstrip('\n') for line in open(transformed_file)]
             target_list = [line.rstrip('\n') for line in open(target_file)]
             omat_list = [line.rstrip('\n') for line in open(omat_file)]
