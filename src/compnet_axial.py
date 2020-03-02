@@ -1,10 +1,9 @@
 import keras
 import argparse
 from keras import optimizers
-import scipy as sp
-import scipy.misc, scipy.ndimage.interpolation
 import numpy as np
 import os
+import sys
 from keras import losses
 import tensorflow as tf
 from keras.models import Model
@@ -16,15 +15,8 @@ from keras import regularizers
 from keras import backend as K
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
-import tensorflow as tf
-#from keras.applications import Xception
-from keras.utils import multi_gpu_model
-import random
-import numpy as np 
 from keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger
-import nibabel as nib
 os.environ['CUDA_VISIBLE_DEVICES']="1"
-import numpy as np
 
 smooth = 1.
 def dice_coef(y_true, y_pred):
@@ -593,6 +585,16 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('-f', action='store', dest='model_folder', type=str,
                         help=" folder which contain the trained model")
+
+try:
+  args = parser.parse_args()
+  if len(sys.argv) == 1:
+      parser.print_help()
+      parser.error('too few arguments')
+      sys.exit(0)
+
+except SystemExit:
+    sys.exit(0)
 
 args = parser.parse_args()
 

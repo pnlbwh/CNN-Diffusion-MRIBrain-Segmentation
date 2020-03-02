@@ -1,10 +1,9 @@
 import keras
 import argparse
 from keras import optimizers
-import scipy as sp
-import scipy.misc, scipy.ndimage.interpolation
 import numpy as np
 import os
+import sys
 from keras import losses
 import tensorflow as tf
 from keras.models import Model
@@ -16,15 +15,8 @@ from keras import regularizers
 from keras import backend as K
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
-import tensorflow as tf
-#from keras.applications import Xception
-from keras.utils import multi_gpu_model
-import random
-import numpy as np 
 from keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger
-import nibabel as nib
 os.environ['CUDA_VISIBLE_DEVICES']="1"
-import numpy as np
 
 smooth = 1.
 def dice_coef(y_true, y_pred):
@@ -594,6 +586,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-f', action='store', dest='model_folder', type=str,
                         help=" folder which contain the trained model")
 
+try:
+  args = parser.parse_args()
+  if len(sys.argv) == 1:
+      parser.print_help()
+      parser.error('too few arguments')
+      sys.exit(0)
+
+except SystemExit:
+    sys.exit(0)
+
 args = parser.parse_args()
 training_data_folder = args.model_folder.rstrip('/')
 
@@ -608,10 +610,6 @@ print ("Training dwi mask volume shape: ", y_train.shape)
 
 x_train=x_train.reshape(x_train.shape+(1,))
 y_train=y_train.reshape(y_train.shape+(1,))
-
-# Log output
-print x_train.shape
-print y_train.shape
 
 #tensorboard = TensorBoard('/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/logs', histogram_freq=1)
 csv_logger = CSVLogger(training_data_folder + '/coronal.csv', append=True, separator=';')

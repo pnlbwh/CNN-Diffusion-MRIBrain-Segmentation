@@ -26,7 +26,6 @@ pipeline.py
 
 # pylint: disable=invalid-name
 import os
-import os.path
 from os import path
 import webbrowser
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress tensor flow message
@@ -60,20 +59,15 @@ import sys
 import subprocess
 import argparse, textwrap
 import datetime
-import os.path
 import pathlib
 import nibabel as nib
 import numpy as np
 import scipy.ndimage as nd
-from os import path
 from keras.models import load_model
 from keras.models import model_from_json
 from multiprocessing import Process, Manager, Value, Pool
-import multiprocessing as mp
 from time import sleep
 import keras
-import scipy as sp
-import os
 from keras import losses
 from keras.models import Model
 from keras.layers import Input, merge, concatenate, Conv2D, MaxPooling2D, \
@@ -151,9 +145,9 @@ def predict_mask(input_file, trained_folder, view='default'):
                                'xfinal_op': neg_dice_coef_loss,
                                'res_1_final_op': 'mse'})
 
-    case_name = os.path.basename(input_file)
+    case_name = path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-' + view + '-mask.npy'
-    output_file = os.path.join(os.path.dirname(input_file), output_name)
+    output_file = path.join(path.dirname(input_file), output_name)
 
     x_test = np.load(input_file)
     x_test = x_test.reshape(x_test.shape + (1,))
@@ -189,9 +183,9 @@ def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
     multi_view[multi_view > 0.45] = 1
     multi_view[multi_view <= 0.45] = 0
 
-    case_name = os.path.basename(input_file)
+    case_name = path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NHDR) + 1)] + '-multi-mask.npy'
-    output_file = os.path.join(os.path.dirname(input_file), output_name)
+    output_file = path.join(path.dirname(input_file), output_name)
 
     SO = multi_view.astype('float32')
     np.save(output_file, SO)
@@ -219,9 +213,9 @@ def normalize(b0_resampled):
     print ("Normalizing input data")
 
     input_file = b0_resampled
-    case_name = os.path.basename(input_file)
+    case_name = path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-normalized.nii.gz'
-    output_file = os.path.join(os.path.dirname(input_file), output_name)
+    output_file = path.join(path.dirname(input_file), output_name)
     img = nib.load(b0_resampled)
     imgU16 = img.get_data().astype(np.float32)
     p = np.percentile(imgU16, 99)
@@ -275,21 +269,21 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
         predict[predict < 0.5] = 0
         predict = predict.astype('int16')
         image_predict = nib.Nifti1Image(predict, image_space.affine, image_space.header)
-        output_dir = os.path.dirname(sub_name[i])
+        output_dir = path.dirname(sub_name[i])
         output_file = cases_mask_arr[i][:len(cases_mask_arr[i]) - len(SUFFIX_NPY)] + 'nii.gz'
         nib.save(image_predict, output_file)
 
         output_file_inverseMask = ANTS_inverse_transform(output_file, reference[i], omat[i])
         Ants_inverse_output_file = output_file_inverseMask
 
-        case_name = os.path.basename(Ants_inverse_output_file)
+        case_name = path.basename(Ants_inverse_output_file)
         fill_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-filled.nii.gz'
-        filled_file = os.path.join(output_dir, fill_name)
+        filled_file = path.join(output_dir, fill_name)
         fill_cmd = "ImageMath 3 " + filled_file + " FillHoles " + Ants_inverse_output_file
         process = subprocess.Popen(fill_cmd.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
-        subject_name = os.path.basename(sub_name[i])
+        subject_name = path.basename(sub_name[i])
         if subject_name.endswith(SUFFIX_NIFTI_GZ):
             format = SUFFIX_NIFTI_GZ
         else:
@@ -297,17 +291,17 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
 
         # Neural Network Predicted Mask
         CNN_predict_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_originalMask.nii.gz'
-        CNN_output_file = os.path.join(output_dir, CNN_predict_file)
+        CNN_output_file = path.join(output_dir, CNN_predict_file)
         bashCommand = 'mv ' + filled_file + " " + CNN_output_file
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
         output_filter_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_FilteredMask.nii.gz'
-        output_mask_filtered = os.path.join(output_dir, output_filter_file)
+        output_mask_filtered = path.join(output_dir, output_filter_file)
 
         print('Cleaning up ', CNN_output_file)
         # mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
-        mask_filter = os.path.join(os.path.dirname(__file__),'../src/maskfilter') + f' {CNN_output_file} 2 {output_mask_filtered}'
+        mask_filter = path.join(path.dirname(__file__),'../src/maskfilter') + f' {CNN_output_file} 2 {output_mask_filtered}'
         process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
@@ -316,7 +310,7 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
         imgU16 = img.get_data().astype(np.int16)
 
         brain_mask_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
-        brain_mask_final = os.path.join(output_dir, brain_mask_file)
+        brain_mask_final = path.join(output_dir, brain_mask_file)
 
         save_nifti(brain_mask_final, imgU16, affine=data_dwi.affine, hdr=data_dwi.header)
         output_mask.append(brain_mask_final)
@@ -383,18 +377,18 @@ def ANTS_rigid_body_trans(b0_nii, result, reference=None):
 
     print("Performing ants rigid body transformation...")
     input_file = b0_nii
-    case_name = os.path.basename(input_file)
+    case_name = path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-'
-    output_file = os.path.join(os.path.dirname(input_file), output_name)
+    output_file = path.join(path.dirname(input_file), output_name)
 
     trans_matrix = "antsRegistrationSyNQuick.sh -d 3 -f " + reference + " -m " + input_file + " -t r -o " + output_file
     output1 = subprocess.check_output(trans_matrix, shell=True)
 
     omat_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-0GenericAffine.mat'
-    omat_file = os.path.join(os.path.dirname(input_file), omat_name)
+    omat_file = path.join(path.dirname(input_file), omat_name)
 
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-Warped.nii.gz'
-    transformed_file = os.path.join(os.path.dirname(input_file), output_name)
+    transformed_file = path.join(path.dirname(input_file), output_name)
 
     result.append((transformed_file, omat_file))
 
@@ -407,9 +401,9 @@ def ANTS_inverse_transform(predicted_mask, reference, omat='default'):
 
     print("Performing ants inverse transform...")
     input_file = predicted_mask
-    case_name = os.path.basename(input_file)
+    case_name = path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-inverse.nii.gz'
-    output_file = os.path.join(os.path.dirname(input_file), output_name)
+    output_file = path.join(path.dirname(input_file), output_name)
 
     # reference is the original b0 volume
     apply_inverse_trans = "antsApplyTransforms -d 3 -i " + predicted_mask + " -r " + reference + " -o " \
@@ -441,7 +435,7 @@ def pre_process(input_file, target_list, b0_threshold=50., which_bse= '--avg'):
     from conversion import nifti_write, read_bvals
     from subprocess import Popen
 
-    if os.path.isfile(input_file):
+    if path.isfile(input_file):
 
         # convert NRRD/NHDR to NIFIT as the first step
         # extract bse.py from just NIFTI later
@@ -450,10 +444,10 @@ def pre_process(input_file, target_list, b0_threshold=50., which_bse= '--avg'):
             nifti_write(input_file)
             input_file= inPrefix+ '.nii.gz'
 
-        directory= os.path.dirname(input_file)
+        directory= path.dirname(input_file)
         inPrefix= input_file.split('.nii')[0]
 
-        b0_nii= os.path.join(directory, 'dwib0_'+ os.path.basename(input_file))
+        b0_nii= path.join(directory, 'dwib0_'+ path.basename(input_file))
         
         print("Extracting b0 volume...")
         
@@ -511,8 +505,8 @@ def quality_control(mask_list, target_list, tmp_path, view='default'):
     final = "slicesdir -o" + slices
     os.chdir(tmp_path)
     subprocess.check_output(final, shell=True)
-    mask_folder = os.path.join(tmp_path, 'slicesdir')
-    mask_newfolder = os.path.join(tmp_path, 'slicesdir_' + view)
+    mask_folder = path.join(tmp_path, 'slicesdir')
+    mask_newfolder = path.join(tmp_path, 'slicesdir_' + view)
     bashCommand = 'mv --force ' + mask_folder + " " + mask_newfolder
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
@@ -573,11 +567,11 @@ if __name__ == '__main__':
                 case_arr = f.read().splitlines()
 
 
-            TXT_file = os.path.basename(filename)
+            TXT_file = path.basename(filename)
             #print(TXT_file)
             unique = TXT_file[:len(TXT_file) - (len(SUFFIX_TXT)+1)]
             #print(unique)
-            storage = os.path.dirname(case_arr[0])
+            storage = path.dirname(case_arr[0])
             tmp_path = storage + '/'
             trained_model_folder = args.model_folder.rstrip('/')
             reference = trained_model_folder + '/IITmean_b0_256.nii.gz'
@@ -788,16 +782,16 @@ if __name__ == '__main__':
                 quality_control(axial_mask, target_list, tmp_path, view='axial')
 
             for i in range(0, len(cases_mask_sagittal)):
-                clear(os.path.dirname(cases_mask_sagittal[i]))
+                clear(path.dirname(cases_mask_sagittal[i]))
 
             if args.snap:
-                webbrowser.open(os.path.join(tmp_path, 'slicesdir_multi/index.html'))
+                webbrowser.open(path.join(tmp_path, 'slicesdir_multi/index.html'))
                 if args.Sagittal:
-                    webbrowser.open(os.path.join(tmp_path, 'slicesdir_sagittal/index.html'))
+                    webbrowser.open(path.join(tmp_path, 'slicesdir_sagittal/index.html'))
                 if args.Coronal:
-                    webbrowser.open(os.path.join(tmp_path, 'slicesdir_coronal/index.html'))
+                    webbrowser.open(path.join(tmp_path, 'slicesdir_coronal/index.html'))
                 if args.Axial:
-                    webbrowser.open(os.path.join(tmp_path, 'slicesdir_axial/index.html'))
+                    webbrowser.open(path.join(tmp_path, 'slicesdir_axial/index.html'))
 
         end_total_time = datetime.datetime.now()
         total_t = end_total_time - start_total_time
