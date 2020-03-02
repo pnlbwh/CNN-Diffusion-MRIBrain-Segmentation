@@ -62,7 +62,6 @@ import datetime
 import pathlib
 import nibabel as nib
 import numpy as np
-import scipy.ndimage as nd
 from keras.models import load_model
 from keras.models import model_from_json
 from multiprocessing import Process, Manager, Value, Pool
