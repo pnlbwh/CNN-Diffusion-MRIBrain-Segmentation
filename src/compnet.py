@@ -623,5 +623,5 @@ def train_model(data_params, train_params, common_params):
   with open(common_params['save_model_dir'] + "/CompNetBasicModel.json", "w") as json_file:
       json_file.write(model_json)
   # serialize weights to HDF5
-  model.save_weights(common_params['save_model_dir'] + "/compnet_final_weight.h5")
+  model.save_weights(common_params['save_model_dir'] + "/" + view + "-compnet_final_weight.h5")
   print("Saved model to disk location: ", common_params['save_model_dir'])
