@@ -299,7 +299,7 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
         output_mask_filtered = path.join(output_dir, output_filter_file)
 
         print('Cleaning up ', CNN_output_file)
-        # mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
+        #mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
         mask_filter = path.join(path.dirname(__file__),'../src/maskfilter') + f' {CNN_output_file} 2 {output_mask_filtered}'
         process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
@@ -319,6 +319,11 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
 
 def clear(directory):
     print ("Cleaning files ...")
+
+    bin_a = 'cases_' + str(os.getpid()) + '_binary_a'
+    bin_s = 'cases_' + str(os.getpid()) + '_binary_s'
+    bin_c = 'cases_' + str(os.getpid()) + '_binary_c'
+
     for filename in os.listdir(directory):
         if filename.startswith('Comp') | filename.endswith(SUFFIX_NPY) | \
                 filename.endswith('_SO.nii.gz') | filename.endswith('downsampled.nii.gz') | \
@@ -327,7 +332,7 @@ def clear(directory):
                 filename.endswith('_affinedMask.nii.gz') | filename.endswith('_originalMask.nii.gz') | \
                 filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz') | \
                 filename.endswith('-InverseWarped.nii.gz') | filename.endswith('-FilteredMask.nii.gz') | \
-                filename.endswith('cases_binary_a') | filename.endswith('cases_binary_c') | filename.endswith('cases_binary_s') | \
+                filename.endswith(bin_a) | filename.endswith(bin_c) | filename.endswith(bin_s) | \
                 filename.endswith('_FilteredMask.nii.gz') | filename.endswith('-normalized.nii.gz'):
                 os.unlink(directory + '/' + filename)
 
