@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import ast
 import configparser
 from collections.abc import Mapping

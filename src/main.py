@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from compnet import train_model
 from settings import Settings
 

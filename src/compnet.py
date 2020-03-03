@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import keras
 import argparse
 from keras import optimizers
