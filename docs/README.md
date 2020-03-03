@@ -146,7 +146,7 @@ Prediction refers to creation of masks based on pre-trained model. This is the c
 
 However, you can train a model on your own data using this software.
 
-1) Open the settings.ini file in the `src` folder and modify the parameters accordingly,
+* Open the settings.ini file in the `src` folder and modify the parameters accordingly,
 After making the changes run
 ```python main.py```
 
