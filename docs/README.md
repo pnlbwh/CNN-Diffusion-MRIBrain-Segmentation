@@ -197,8 +197,8 @@ Make sure to account for registered paths if have have done so.
 Then, we normalize b0 image to the range [0,1] with respect to its highest intensity. 
 Same clipping is performed to the mask. 
 
-    src/preprocess_b0 -i b0_list.txt
-    src/preprocess_mask -i mask_list.txt    
+    src/preprocess_b0.py -i b0_list.txt
+    src/preprocess_mask.py -i mask_list.txt    
 
 Upon preprocessing, b0 data are appended to:
     
