@@ -272,8 +272,8 @@ branch generate brain mask
 complementary branche and expects reasonable predictions from them as input to reconstruct the original input image.
 
 ![](CompNet.png)
+**Illustration kindly provided by Raunak Dey**
 
-**TBD source of picture**
 
 ## 2. Multi View Aggregation:
 
@@ -282,10 +282,9 @@ to perform multi-view aggregation step that combines segmentations from models t
 coronal, sagittal and axial. The final segmentation is obtained by combining the probability maps from all three segmentation.
 
 ![](Multiview.png)
-**TBD source of picture**
 
 
-See **TBD multi view reference** for details
+See [Reference #2](#reference) for details of this method.
 
 
 ## 3. Clean up
@@ -302,15 +301,13 @@ We shall get back to you as soon as we can.
 
 # Reference
 
-* Dey, Raunak, and Yi Hong. "CompNet: Complementary segmentation network for brain MRI extraction." 
+* 1. Dey, Raunak, and Yi Hong. "CompNet: Complementary segmentation network for brain MRI extraction." 
 International Conference on Medical Image Computing and Computer-Assisted Intervention. Springer, Cham, 2018.
 
-* Roy, Abhijit Guha, et al. "QuickNAT: A fully convolutional network for quick and accurate segmentation of neuroanatomy." 
+* 2. Roy, Abhijit Guha, et al. "QuickNAT: A fully convolutional network for quick and accurate segmentation of neuroanatomy." 
 NeuroImage 186 (2019): 713-727.
 
-* Billah, Tashrif; Bouix; Sylvain; Rathi, Yogesh; Various MRI Conversion Tools, https://github.com/pnlbwh/conversion, 2019, 
+* 3. Billah, Tashrif; Bouix; Sylvain; Rathi, Yogesh; Various MRI Conversion Tools, https://github.com/pnlbwh/conversion, 2019, 
 DOI: 10.5281/zenodo.2584003
 
-
-* **TBD multi view reference**
 
