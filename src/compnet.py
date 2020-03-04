@@ -2,6 +2,11 @@ import argparse
 import numpy as np
 import os
 import sys
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    import tensorflow as tf
+    
 import keras
 from keras.models import Model
 from keras.layers import Input,merge, concatenate, Conv2D, MaxPooling2D, Activation, UpSampling2D,Dropout,Conv2DTranspose,add,multiply
