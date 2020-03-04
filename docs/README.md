@@ -156,6 +156,7 @@ registration.py -dwi casedwi.txt -mask casemask.txt -ref model_folder/IITmean_b0
 preprocess_dwi -i dwi.txt
 preprocess_mask -i mask.txt
 ```
+The training data will be stored in the directory of the first case in dwi.txt
 
 * Open the settings.ini file in the `src` folder and modify the parameters accordingly,
 After making the changes run
