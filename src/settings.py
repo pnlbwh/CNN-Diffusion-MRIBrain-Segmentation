@@ -1,7 +1,7 @@
-#!/usr/bin/env python
 import ast
 import configparser
 from collections.abc import Mapping
+from os import getenv
 
 
 def parse_values(config):
@@ -14,7 +14,11 @@ def parse_values(config):
 
 
 class Settings(Mapping):
-    def __init__(self, setting_file='settings.ini'):
+    def __init__(self, setting_file=getenv('COMPNET_CONFIG')):
+
+        if not setting_file:
+            raise EnvironmentError('environment variable COMPNET_CONFIG is not defined, see docs/README.md for details')
+
         config = configparser.ConfigParser()
         config.read(setting_file)
         self.settings_dict = parse_values(config)
@@ -27,3 +31,4 @@ class Settings(Mapping):
 
     def __iter__(self):
         return self.settings_dict.items()
+    
