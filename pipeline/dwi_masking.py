@@ -434,7 +434,7 @@ def list_masks(mask_list, view='default'):
         print (view + " Mask file = ", mask_list[i])
 
 
-def pre_process(input_file, target_list, b0_threshold=50., which_bse= '--avg'):
+def pre_process(input_file, target_list, b0_threshold=50.):
 
     from conversion import nifti_write, read_bvals
     from subprocess import Popen
