@@ -1,25 +1,11 @@
 #!/usr/bin/env python
 import os
+from os import path
 import sys
 import numpy as np
 import nibabel as nib
 import argparse
 import pathlib
-
-# dwi cases will be written to the below binary files
-sagittal_bin_file = 'sagittal-binary-dwi'
-coronal_bin_file = 'coronal-binary-dwi'
-axial_bin_file = 'axial-binary-dwi'
-
-# The above binary files will be converted to 3D numpy array
-sagittal_trainingdata = 'sagittal-traindata-dwi.npy'
-coronal_trainingdata = 'coronal-traindata-dwi.npy'
-axial_trainingdata = 'axial-traindata-dwi.npy'
-
-# Open the binary file for writing
-sagittal_f_handle = open(sagittal_bin_file, 'wb')
-coronal_f_handle = open(coronal_bin_file, 'wb')
-axial_f_handle = open(axial_bin_file, 'wb')
 
 # Function to preprocess the dwi cases
 def process_trainingdata(dwib0_arr):
@@ -83,6 +69,22 @@ if args.dwi:
     if filename.endswith(SUFFIX_TXT):
         with open(filename) as f:
             dwib0_arr = f.read().splitlines()
+
+storage = path.dirname(dwib0_arr[0])
+# dwi cases will be written to the below binary files
+sagittal_bin_file = storage + '/sagittal-binary-dwi'
+coronal_bin_file = storage + '/coronal-binary-dwi'
+axial_bin_file = storage + '/axial-binary-dwi'
+
+# The above binary files will be converted to 3D numpy array
+sagittal_trainingdata = storage + '/sagittal-traindata-dwi.npy'
+coronal_trainingdata = storage + '/coronal-traindata-dwi.npy'
+axial_trainingdata = storage + '/axial-traindata-dwi.npy'
+
+# Open the binary file for writing
+sagittal_f_handle = open(sagittal_bin_file, 'wb')
+coronal_f_handle = open(coronal_bin_file, 'wb')
+axial_f_handle = open(axial_bin_file, 'wb')
 
 process_trainingdata(dwib0_arr)
 x_dim=len(dwib0_arr)*256

@@ -299,8 +299,8 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
         output_mask_filtered = path.join(output_dir, output_filter_file)
 
         print('Cleaning up ', CNN_output_file)
-        mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
-        #mask_filter = path.join(path.dirname(__file__),'../src/maskfilter') + f' {CNN_output_file} 2 {output_mask_filtered}'
+        #mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
+        mask_filter = path.join(path.dirname(__file__),'../src/maskfilter') + f' {CNN_output_file} 2 {output_mask_filtered}'
         process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
@@ -771,8 +771,8 @@ if __name__ == '__main__':
                 list_masks(axial_mask, view='axial')
                 quality_control(axial_mask, target_list, tmp_path, view='axial')
 
-            #for i in range(0, len(cases_mask_sagittal)):
-            #    clear(path.dirname(cases_mask_sagittal[i]))
+            for i in range(0, len(cases_mask_sagittal)):
+                clear(path.dirname(cases_mask_sagittal[i]))
 
             if args.snap:
                 webbrowser.open(path.join(tmp_path, 'slicesdir_multi/index.html'))
