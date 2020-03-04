@@ -151,9 +151,9 @@ However, you can train a model on your own data using this software.
 2) Generate x_train npy file
 3) Generate y_train npy file
 
-```python registration.py -dwi casedwi.txt -mask casemask.txt -ref model_folder/IITmean_b0_256.nii.gz```
-``` python preprocess_dwi -i dwi.txt```
-```python preprocess_mask -i mask.txt```
+`python registration.py -dwi casedwi.txt -mask casemask.txt -ref model_folder/IITmean_b0_256.nii.gz
+ python preprocess_dwi -i dwi.txt
+ python preprocess_mask -i mask.txt`
 
 * Open the settings.ini file in the `src` folder and modify the parameters accordingly,
 After making the changes run
