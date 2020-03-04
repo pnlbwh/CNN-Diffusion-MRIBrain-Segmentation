@@ -107,7 +107,7 @@ for i in range(0, len(transformed_cases)):
     input_file = transformed_cases[i]
     case_name = os.path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-mask.nii.gz'
-    output_file = os.path.join(os.path.dirname(input_file), output_name)
+    output_file = os.path.join(os.path.dirname(masks_new_list[i]), output_name)
     apply_mask_trans = "antsApplyTransforms -d 3 -i " + masks_new_list[i] + " -r " + input_file + " -o " \
                             + output_file + " --transform [" + omat_list[i] + "]"
 
