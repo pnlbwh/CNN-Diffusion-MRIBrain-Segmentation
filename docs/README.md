@@ -148,14 +148,15 @@ However, you can train a model on your own data using this software.
 
 * Generate training data
   1) Image Registration ( optional )
-  2) Generate x_train npy file
-  3) Generate y_train npy file
+  2) Generate dwi npy file
+  3) Generate mask npy file
 
 ```
 registration.py -dwi casedwi.txt -mask casemask.txt -ref model_folder/IITmean_b0_256.nii.gz
 preprocess_dwi -i dwi.txt
 preprocess_mask -i mask.txt
 ```
+The training data will be stored in the directory of the first case in dwi.txt
 
 * Open the settings.ini file in the `src` folder and modify the parameters accordingly,
 After making the changes run
