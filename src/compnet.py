@@ -1,22 +1,14 @@
-#!/usr/bin/env python
-import keras
 import argparse
-from keras import optimizers
 import numpy as np
 import os
 import sys
-from keras import losses
-import tensorflow as tf
+import keras
 from keras.models import Model
 from keras.layers import Input,merge, concatenate, Conv2D, MaxPooling2D, Activation, UpSampling2D,Dropout,Conv2DTranspose,add,multiply
 from keras.layers.normalization import BatchNormalization as bn
-from keras.callbacks import ModelCheckpoint, TensorBoard
-from keras.optimizers import RMSprop
-from keras import regularizers 
-from keras import backend as K
-from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint
-from keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger
+from keras.optimizers import RMSprop, Adam
+from keras import regularizers, losses, backend as K
+from keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger, ModelCheckpoint, TensorBoard
 os.environ['CUDA_VISIBLE_DEVICES']="0"
 
 smooth = 1.
