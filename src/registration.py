@@ -30,7 +30,7 @@ def ANTS_rigid_body_trans(b0_nii, result, mask_file, reference):
 SUFFIX_TXT = "txt"
 SUFFIX_NIFTI_GZ = "nii.gz"
 parser = argparse.ArgumentParser()
-parser.add_argument('-dwi', action='store', dest='dwi', type=str,
+parser.add_argument('-b0', action='store', dest='b0', type=str,
                         help="txt file containing list of /path/to/b0, one path in each line")
 parser.add_argument('-mask', action='store', dest='mask', type=str,
                         help="txt file containing list of /path/to/mask, one path in each line")
@@ -50,11 +50,11 @@ try:
 except SystemExit:
     sys.exit(0)
 
-if args.dwi:
-    f = pathlib.Path(args.dwi)
+if args.b0:
+    f = pathlib.Path(args.b0)
     if f.exists():
         print ("File exist")
-        filename = args.dwi
+        filename = args.b0
     else:
         print ("File not found")
         sys.exit(1)
