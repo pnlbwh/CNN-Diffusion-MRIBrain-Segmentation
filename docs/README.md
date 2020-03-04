@@ -138,10 +138,10 @@ They will be extracted to `CNN-Diffusion-MRIBrain-Segmentation/model_folder` dir
 
 Prediction refers to creation of masks based on pre-trained model. This is the common use of this software.
     
-    pipeline/dwi_masking.py -i cases.txt -f model_folder
-    pipeline/dwi_masking.py -i cases.txt -f model_folder -nproc 16
+    pipeline/dwi_masking.py -i dwi_list.txt -f model_folder
+    pipeline/dwi_masking.py -i dwi_list.txt -f model_folder -nproc 16
     
-* `cases.txt` should contain the full path to the diffusion volumes
+* `dwi_list.txt` should contain the full path to the diffusion volumes
 
 * Each created mask is saved in directory its diffusion volume with name `dwib0_{PREFIX}-multi_BrainMask.nii.gz`
 
@@ -169,7 +169,7 @@ from https://www.nitrc.org/frs/?group_id=432 . If your b0s and corresponding mas
 
 Example:
 
-    src/registration.py -b0 b0_list.txt -mask casemask.txt -ref model_folder/IITmean_b0_256.nii.gz
+    src/registration.py -b0 b0_list.txt -mask mask_list.txt -ref model_folder/IITmean_b0_256.nii.gz
     
 
 The registered images are stored in the directory of given images as `{Prefix}-Warped.nii.gz` and 
@@ -207,7 +207,7 @@ Upon preprocessing, b0 data are appended to:
     axial-traindata-dwi.npy
 
 Similarly, mask data are appended to files with `-mask.npy` suffix. The above `*.npy` files are saved in 
-the directory of the first b0 image in `b0_list.txt`.
+the directory of the first b0 image given in `b0_list.txt`.
 
 
 ### 4. Deep learning
