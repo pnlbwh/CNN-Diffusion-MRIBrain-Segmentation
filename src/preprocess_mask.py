@@ -1,24 +1,11 @@
+#!/usr/bin/env python
 import os
+from os import path
 import sys
 import numpy as np
 import nibabel as nib
 import argparse
 import pathlib
-
-# dwi cases mask will be written to the below binary files
-sagittal_bin_file = 'sagittal-binary-mask'
-coronal_bin_file = 'coronal-binary-mask'
-axial_bin_file = 'axial-binary-mask'
-
-# The above binary files will be converted to 3D numpy array
-sagittal_trainingdata='sagittal-traindata-mask.npy'
-coronal_trainingdata='coronal-traindata-mask.npy'
-axial_trainingdata='axial-traindata-mask.npy'
-
-# Open the binary file for writing
-sagittal_f_handle = open(sagittal_bin_file, 'wb')
-coronal_f_handle = open(coronal_bin_file, 'wb')
-axial_f_handle = open(axial_bin_file, 'wb')
 
 def process_trainingdata(mask_arr):
     count = 0
@@ -47,7 +34,7 @@ def process_trainingdata(mask_arr):
 SUFFIX_TXT = "txt"
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', action='store', dest='dwi', type=str,
-                        help=" input dwi masks file in txt format")
+                        help="txt file containing list of /path/to/mask, one path in each line")
 args = parser.parse_args()
 
 try:
@@ -73,6 +60,24 @@ if args.dwi:
     if filename.endswith(SUFFIX_TXT):
         with open(filename) as f:
             mask_arr = f.read().splitlines()
+
+
+storage = path.dirname(mask_arr[0])
+
+# dwi cases mask will be written to the below binary files
+sagittal_bin_file = storage + '/sagittal-binary-mask'
+coronal_bin_file = storage + '/coronal-binary-mask'
+axial_bin_file = storage + '/axial-binary-mask'
+
+# The above binary files will be converted to 3D numpy array
+sagittal_trainingdata = storage + '/sagittal-traindata-mask.npy'
+coronal_trainingdata = storage + '/coronal-traindata-mask.npy'
+axial_trainingdata = storage + '/axial-traindata-mask.npy'
+
+# Open the binary file for writing
+sagittal_f_handle = open(sagittal_bin_file, 'wb')
+coronal_f_handle = open(coronal_bin_file, 'wb')
+axial_f_handle = open(axial_bin_file, 'wb')
 
 process_trainingdata(mask_arr)
 

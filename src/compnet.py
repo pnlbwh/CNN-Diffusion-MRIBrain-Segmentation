@@ -1,30 +1,20 @@
-import keras
 import argparse
-from keras import optimizers
-import scipy as sp
-import scipy.misc, scipy.ndimage.interpolation
 import numpy as np
 import os
-from keras import losses
-import tensorflow as tf
+import sys
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    import tensorflow as tf
+    
+import keras
 from keras.models import Model
 from keras.layers import Input,merge, concatenate, Conv2D, MaxPooling2D, Activation, UpSampling2D,Dropout,Conv2DTranspose,add,multiply
 from keras.layers.normalization import BatchNormalization as bn
-from keras.callbacks import ModelCheckpoint, TensorBoard
-from keras.optimizers import RMSprop
-from keras import regularizers 
-from keras import backend as K
-from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint
-import tensorflow as tf
-#from keras.applications import Xception
-from keras.utils import multi_gpu_model
-import random
-import numpy as np 
-from keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger
-import nibabel as nib
-os.environ['CUDA_VISIBLE_DEVICES']="1"
-import numpy as np
+from keras.optimizers import RMSprop, Adam
+from keras import regularizers, losses, backend as K
+from keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger, ModelCheckpoint, TensorBoard
+os.environ['CUDA_VISIBLE_DEVICES']="0"
 
 smooth = 1.
 def dice_coef(y_true, y_pred):
@@ -576,9 +566,6 @@ def Comp_U_Net(input_shape,learn_rate=1e-3):
                                          xfinal_op,
                                          res_1_final_op,
                                      ])
-    
-    #print("Training using multiple GPUs...")
-    #model = multi_gpu_model(model, gpus=1)
 
     model.compile(optimizer=keras.optimizers.Adam(lr=1e-5),loss={'final_op':dice_coef_loss,
                                                 'xfinal_op':neg_dice_coef_loss,
@@ -589,53 +576,50 @@ def Comp_U_Net(input_shape,learn_rate=1e-3):
 #----------------------------------------------------Main--------------------------------------------------#
 
 
-parser = argparse.ArgumentParser()
+def train_model(data_params, train_params, common_params):
 
-parser.add_argument('-f', action='store', dest='model_folder', type=str,
-                        help=" folder which contain the trained model")
 
-args = parser.parse_args()
+  training_data_folder = data_params['data_dir'].rstrip('/')
 
-training_data_folder = args.model_folder.rstrip('/')
+  train_x = training_data_folder + '/' + data_params['train_data_file']
+  train_y = training_data_folder + '/' + data_params['train_label_file']
 
-train_x = training_data_folder + '/axial-traindata-dwi.npy'
-train_y = training_data_folder + '/axial-traindata-mask.npy'
+  model = Comp_U_Net(input_shape=(256,256,1), learn_rate=train_params['learning_rate'])
+  #print(model.summary())
 
-model = Comp_U_Net(input_shape=(256,256,1))
-#print(model.summary())
+  x_train = np.load(train_x)
+  y_train = np.load(train_y)
 
-x_train = np.load(train_x)
-y_train = np.load(train_y)
+  x_train=x_train.reshape(x_train.shape+(1,))
+  y_train=y_train.reshape(y_train.shape+(1,))
 
-x_train=x_train.reshape(x_train.shape+(1,))
-y_train=y_train.reshape(y_train.shape+(1,))
+  # Log output
+  print ("Training dwi volume shape: ", x_train.shape)
+  print ("Training dwi mask volume shape: ", y_train.shape)
 
-# Log output
-print ("Training dwi volume shape: ", x_train.shape)
-print ("Training dwi mask volume shape: ", y_train.shape)
+  view = train_params['principal_axis']
 
-#tensorboard = TensorBoard('/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/logs', histogram_freq=1)
-csv_logger = CSVLogger(training_data_folder + '/axial.csv', append=True, separator=';')
+  csv_logger = CSVLogger(common_params['log_dir'] + '/' + view + '.csv', append=True, separator=';')
 
-# checkpoint
-filepath = training_data_folder + "/weights-axial-improvement-{epoch:02d}.h5"
-checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, save_weights_only=True)
+  # checkpoint
+  filepath = common_params['save_model_dir'] + "/weights-" + view + "-improvement-{epoch:02d}.h5"
+  checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, save_weights_only=True)
 
-# Trains the model for a given number of epochs (iterations on a dataset).
-history_callback = model.fit([x_train], 
-                             [y_train,y_train,y_train], 
-                             validation_split=0.2,
-                             batch_size=4, 
-                             epochs=10,
-                             shuffle=True, 
-                             verbose=1, 
-                             callbacks=[csv_logger, checkpoint])
+  # Trains the model for a given number of epochs (iterations on a dataset).
+  history_callback = model.fit([x_train], 
+                               [y_train,y_train,y_train], 
+                               validation_split=train_params['validation_split'],
+                               batch_size=train_params['train_batch_size'], 
+                               epochs=train_params['num_epochs'],
+                               shuffle=train_params['shuffle_data'], 
+                               verbose=1, 
+                               callbacks=[csv_logger, checkpoint])
 
-import h5py
-# serialize model to JSON
-model_json = model.to_json()
-with open(training_data_folder + "/CompNetBasicModel.json", "w") as json_file:
-    json_file.write(model_json)
-# serialize weights to HDF5
-model.save_weights(training_data_folder + "/CompNetBasicModel_weights_DWI_axial_final.h5")
-print("Saved model to disk location: ", training_data_folder)
+  import h5py
+  # serialize model to JSON
+  model_json = model.to_json()
+  with open(common_params['save_model_dir'] + "/CompNetBasicModel.json", "w") as json_file:
+      json_file.write(model_json)
+  # serialize weights to HDF5
+  model.save_weights(common_params['save_model_dir'] + "/" + view + "-compnet_final_weight.h5")
+  print("Saved model to disk location: ", common_params['save_model_dir'])
