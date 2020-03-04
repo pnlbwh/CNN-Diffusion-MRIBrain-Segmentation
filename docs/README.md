@@ -146,9 +146,15 @@ Prediction refers to creation of masks based on pre-trained model. This is the c
 
 However, you can train a model on your own data using this software.
 
+* Generate training data
+### Image Registration optional
+```python registration.py -dwi cases_dwi.txt -mask cases_mask.txt -ref model_folder/IITmean_b0_256.nii.gz```
+``` python preprocess_dwi -i cases_dwi.txt```
+```python preprocess_mask -i cases_mask.txt```
+
 * Open the settings.ini file in the `src` folder and modify the parameters accordingly,
 After making the changes run
-```python main.py```
+```python train.py```
 
 
 # Method
