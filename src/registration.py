@@ -31,11 +31,11 @@ SUFFIX_TXT = "txt"
 SUFFIX_NIFTI_GZ = "nii.gz"
 parser = argparse.ArgumentParser()
 parser.add_argument('-dwi', action='store', dest='dwi', type=str,
-                        help=" input dwi cases file in txt format")
+                        help="txt file containing list of /path/to/b0, one path in each line")
 parser.add_argument('-mask', action='store', dest='mask', type=str,
-                        help=" input dwi cases file in txt format")
+                        help="txt file containing list of /path/to/mask, one path in each line")
 parser.add_argument('-ref', action='store', dest='ref', type=str,
-                        help=" reference b0 file for registration")
+                        help="reference b0 file for registration")
 
 args = parser.parse_args()
 reference = str(args.ref)

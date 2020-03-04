@@ -34,7 +34,7 @@ def process_trainingdata(mask_arr):
 SUFFIX_TXT = "txt"
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', action='store', dest='dwi', type=str,
-                        help=" input dwi masks file in txt format")
+                        help="txt file containing list of /path/to/mask, one path in each line")
 args = parser.parse_args()
 
 try:

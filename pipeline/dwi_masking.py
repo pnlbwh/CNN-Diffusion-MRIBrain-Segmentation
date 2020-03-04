@@ -509,22 +509,22 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', action='store', dest='dwi', type=str,
-                        help=" input caselist file in txt format")
+                        help="txt file containing list of /path/to/dwi, one path in each line")
 
     parser.add_argument('-f', action='store', dest='model_folder', type=str,
-                        help=" folder which contain the trained model")
+                        help="folder containing the trained models")
 
     parser.add_argument("-a", type=str2bool, dest='Axial', nargs='?',
                         const=True, default=False,
-                        help="Advanced option to generate multiview and axial Mask (yes/true/y/1)")
+                        help="advanced option to generate multiview and axial Mask (yes/true/y/1)")
 
     parser.add_argument("-c", type=str2bool, dest='Coronal', nargs='?',
                         const=True, default=False,
-                        help="Advanced option to generate multiview and coronal Mask (yes/true/y/1)")
+                        help="advanced option to generate multiview and coronal Mask (yes/true/y/1)")
 
     parser.add_argument("-s", type=str2bool, dest='Sagittal', nargs='?',
                         const=True, default=False,
-                        help="Advanced option to generate multiview and sagittal Mask (yes/true/y/1)")
+                        help="advanced option to generate multiview and sagittal Mask (yes/true/y/1)")
 
     parser.add_argument("-qc", type=str2bool, dest='snap', nargs='?',
                         const=True, default=False,
