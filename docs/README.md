@@ -147,9 +147,9 @@ Prediction refers to creation of masks based on pre-trained model. This is the c
 However, you can train a model on your own data using this software.
 
 * Generate training data
-1) Image Registration ( optional )
-2) Generate x_train npy file
-3) Generate y_train npy file
+  1) Image Registration ( optional )
+  2) Generate x_train npy file
+  3) Generate y_train npy file
 
 ```
 python registration.py -dwi casedwi.txt -mask casemask.txt -ref model_folder/IITmean_b0_256.nii.gz
