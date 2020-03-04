@@ -159,8 +159,9 @@ python preprocess_mask -i mask.txt
 
 * Open the settings.ini file in the `src` folder and modify the parameters accordingly,
 After making the changes run
-```python train.py```
-
+```
+python train.py
+```
 
 # Method
 
