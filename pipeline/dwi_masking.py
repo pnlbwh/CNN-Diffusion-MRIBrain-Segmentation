@@ -507,15 +507,22 @@ def quality_control(mask_list, target_list, tmp_path, view='default'):
         str1 = target_list[i]
         str2 = mask_list[i]
         slices += str1 + " " + str2 + " "
-    
+
     final = "slicesdir -o" + slices
+    dir_bak = os.getcwd()
     os.chdir(tmp_path)
-    subprocess.check_output(final, shell=True)
+    process= subprocess.Popen(final, shell=True)
+    process.wait()
+    os.chdir(dir_bak)
+
     mask_folder = os.path.join(tmp_path, 'slicesdir')
     mask_newfolder = os.path.join(tmp_path, 'slicesdir_' + view)
-    bashCommand = 'mv --force ' + mask_folder + " " + mask_newfolder
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
+    if os.path.exists(mask_newfolder):
+        process= subprocess.Popen('rm -rf '+ mask_newfolder, shell=True)
+        process.wait()
+
+    process = subprocess.Popen('mv ' + mask_folder + " " + mask_newfolder, shell=True)
+    process.wait()
 
 
 if __name__ == '__main__':
