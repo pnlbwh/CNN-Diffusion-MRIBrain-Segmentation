@@ -219,21 +219,21 @@ Copy the `src/settings.ini` to a different directory and edit relevant fields:
 
 ```ini
 [COMMON]
-save_model_dir = project/model_dir/
-log_dir = project/log_dir
+save_model_dir = "project/model_dir/"
+log_dir = "project/log_dir"
 
 [DATA]
-data_dir = project/dir/of/first/case/
-train_data_file = sagittal-traindata-dwi.npy
-train_label_file = sagittal-traindata-mask.npy
+data_dir = "project/dir/of/first/case/"
+train_data_file = "sagittal-traindata-dwi.npy"
+train_label_file = "sagittal-traindata-mask.npy"
 
 [TRAINING]
-principal_axis = sagittal
+principal_axis = "sagittal"
 learning_rate = 1e-3
 train_batch_size = 4
 validation_split = 0.2
 num_epochs = 1
-shuffle_data = True
+shuffle_data = "True"
 ```
 
 At the very least, you should edit `save_model_dir`, `log_dir`, and `data_dir` fields. Now define 
