@@ -33,7 +33,7 @@ def process_trainingdata(mask_arr):
 # parser module for input arguments
 SUFFIX_TXT = "txt"
 parser = argparse.ArgumentParser()
-parser.add_argument('-i', action='store', dest='dwi', type=str,
+parser.add_argument('-i', action='store', dest='mask', type=str,
                         help="txt file containing list of /path/to/mask, one path in each line")
 args = parser.parse_args()
 
@@ -47,11 +47,11 @@ try:
 except SystemExit:
     sys.exit(0)
 
-if args.dwi:
-    f = pathlib.Path(args.dwi)
+if args.mask:
+    f = pathlib.Path(args.mask)
     if f.exists():
         print ("File exist")
-        filename = args.dwi
+        filename = args.mask
     else:
         print ("File not found")
         sys.exit(1)
