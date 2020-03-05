@@ -579,47 +579,49 @@ def Comp_U_Net(input_shape,learn_rate=1e-3):
 def train_model(data_params, train_params, common_params):
 
 
-  training_data_folder = data_params['data_dir'].rstrip('/')
+    training_data_folder = data_params['data_dir'].rstrip('/')
 
-  train_x = training_data_folder + '/' + data_params['train_data_file']
-  train_y = training_data_folder + '/' + data_params['train_label_file']
+    train_x = training_data_folder + '/' + data_params['train_data_file']
+    train_y = training_data_folder + '/' + data_params['train_label_file']
 
-  model = Comp_U_Net(input_shape=(256,256,1), learn_rate=train_params['learning_rate'])
-  #print(model.summary())
+    model = Comp_U_Net(input_shape=(256,256,1), learn_rate=train_params['learning_rate'])
+    # print(model.summary())
 
-  x_train = np.load(train_x)
-  y_train = np.load(train_y)
+    x_train = np.load(train_x)
+    y_train = np.load(train_y)
 
-  x_train=x_train.reshape(x_train.shape+(1,))
-  y_train=y_train.reshape(y_train.shape+(1,))
+    x_train=x_train.reshape(x_train.shape+(1,))
+    y_train=y_train.reshape(y_train.shape+(1,))
 
-  # Log output
-  print ("Training dwi volume shape: ", x_train.shape)
-  print ("Training dwi mask volume shape: ", y_train.shape)
+    # Log output
+    print ("Training dwi volume shape: ", x_train.shape)
+    print ("Training dwi mask volume shape: ", y_train.shape)
 
-  view = train_params['principal_axis']
+    view = train_params['principal_axis']
 
-  csv_logger = CSVLogger(common_params['log_dir'] + '/' + view + '.csv', append=True, separator=';')
+    os.makedirs(common_params['log_dir'], exist_ok= True)
+    csv_logger = CSVLogger(common_params['log_dir'] + '/' + view + '.csv', append=True, separator=';')
 
-  # checkpoint
-  filepath = common_params['save_model_dir'] + "/weights-" + view + "-improvement-{epoch:02d}.h5"
-  checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, save_weights_only=True)
+    # checkpoint
+    os.makedirs(common_params['save_model_dir'], exist_ok= True)
+    filepath = common_params['save_model_dir'] + "/weights-" + view + "-improvement-{epoch:02d}.h5"
+    checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, save_weights_only=True)
 
-  # Trains the model for a given number of epochs (iterations on a dataset).
-  history_callback = model.fit([x_train], 
-                               [y_train,y_train,y_train], 
-                               validation_split=train_params['validation_split'],
-                               batch_size=train_params['train_batch_size'], 
-                               epochs=train_params['num_epochs'],
-                               shuffle=train_params['shuffle_data'], 
-                               verbose=1, 
-                               callbacks=[csv_logger, checkpoint])
+    # Trains the model for a given number of epochs (iterations on a dataset).
+    history_callback = model.fit([x_train],
+                                 [y_train,y_train,y_train],
+                                 validation_split=train_params['validation_split'],
+                                 batch_size=train_params['train_batch_size'],
+                                 epochs=train_params['num_epochs'],
+                                 shuffle=train_params['shuffle_data'],
+                                 verbose=1,
+                                 callbacks=[csv_logger, checkpoint])
 
-  import h5py
-  # serialize model to JSON
-  model_json = model.to_json()
-  with open(common_params['save_model_dir'] + "/CompNetBasicModel.json", "w") as json_file:
-      json_file.write(model_json)
-  # serialize weights to HDF5
-  model.save_weights(common_params['save_model_dir'] + "/" + view + "-compnet_final_weight.h5")
-  print("Saved model to disk location: ", common_params['save_model_dir'])
+    import h5py
+    # serialize model to JSON
+    model_json = model.to_json()
+    with open(common_params['save_model_dir'] + "/CompNetBasicModel.json", "w") as json_file:
+        json_file.write(model_json)
+    # serialize weights to HDF5
+    model.save_weights(common_params['save_model_dir'] + "/" + view + "-compnet_final_weight.h5")
+    print("Saved model to disk location: ", common_params['save_model_dir'])
