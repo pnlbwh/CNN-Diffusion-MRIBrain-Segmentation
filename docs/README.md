@@ -9,7 +9,7 @@ Table of Contents
 =================
 
    * [Table of Contents](#table-of-contents)
-   * [Segmenting diffusion brain MRI](#segmenting-diffusion-brain-mri)
+   * [Segmenting diffusion MRI brain](#segmenting-diffusion-mri-brain)
    * [Citation](#citation)
    * [Dependencies](#dependencies)
    * [Installation](#installation)
@@ -36,7 +36,7 @@ Table of Contents
 Table of contents created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 
-# Segmenting diffusion brain MRI
+# Segmenting diffusion MRI brain
 
 A challenging problem in neuroscience is to create brain mask of an MRI. The problem becomes more challenging when 
 the MRI is a diffusion MRI (dMRI) since it has less contrast between brain and non-brain regions. Researchers all over the 
