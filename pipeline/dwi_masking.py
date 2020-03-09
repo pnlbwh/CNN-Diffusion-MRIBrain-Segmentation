@@ -191,7 +191,7 @@ def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
     return output_file
 
 
-def normalize(b0_resampled):
+def normalize(b0_resampled, percentile, data_n):
     """
     Intensity based segmentation of MR images is hampered by radio frerquency field
     inhomogeneity causing intensity variation. The intensity range is typically
@@ -217,13 +217,13 @@ def normalize(b0_resampled):
     output_file = path.join(path.dirname(input_file), output_name)
     img = nib.load(b0_resampled)
     imgU16 = img.get_data().astype(np.float32)
-    p = np.percentile(imgU16, 99)
+    p = np.percentile(imgU16, percentile)
     data = imgU16 / p
     data[data > 1] = 1
     data[data < 0] = 0
     image_dwi = nib.Nifti1Image(data, img.affine, img.header)
     nib.save(image_dwi, output_file)
-    return output_file
+    data_n.append(output_file)
 
 
 def save_nifti(fname, data, affine=None, hdr=None):
@@ -291,7 +291,7 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
         # Neural Network Predicted Mask
         CNN_predict_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_originalMask.nii.gz'
         CNN_output_file = path.join(output_dir, CNN_predict_file)
-        bashCommand = 'mv ' + filled_file + " " + CNN_output_file
+        bashCommand = 'cp ' + filled_file + " " + CNN_output_file
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
@@ -299,14 +299,15 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
         output_mask_filtered = path.join(output_dir, output_filter_file)
 
         print('Cleaning up ', CNN_output_file)
-        # mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
-        mask_filter = path.join(path.dirname(__file__),'../src/maskfilter') + f' {CNN_output_file} 2 {output_mask_filtered}'
+        mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
+        # mask_filter = path.join(path.dirname(__file__),'../src/maskfilter') + f' {CNN_output_file} 2 {output_mask_filtered}'
         process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
+        print(output_mask_filtered)
         img = nib.load(output_mask_filtered)
         data_dwi = nib.load(sub_name[i])
-        imgU16 = img.get_data().astype(np.int16)
+        imgU16 = img.get_data().astype(np.uint8)
 
         brain_mask_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
         brain_mask_final = path.join(output_dir, brain_mask_file)
@@ -330,10 +331,10 @@ def clear(directory):
                 filename.endswith('-thresholded.nii.gz') | filename.endswith('-inverse.mat') | \
                 filename.endswith('-Warped.nii.gz') | filename.endswith('-0GenericAffine.mat') | \
                 filename.endswith('_affinedMask.nii.gz') | filename.endswith('_originalMask.nii.gz') | \
-                filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz') | \
+                filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz') |  \
                 filename.endswith('-InverseWarped.nii.gz') | filename.endswith('-FilteredMask.nii.gz') | \
                 filename.endswith(bin_a) | filename.endswith(bin_c) | filename.endswith(bin_s) | \
-                filename.endswith('_FilteredMask.nii.gz') | filename.endswith('-normalized.nii.gz'):
+                filename.endswith('_FilteredMask.nii.gz') | filename.endswith('-normalized.nii.gz') | filename.endswith('-filled.nii.gz'):
                 os.unlink(directory + '/' + filename)
 
 
@@ -467,10 +468,10 @@ def pre_process(input_file, target_list, b0_threshold=50.):
         sys.exit(1)
 
 
-def remove_string(input_file, output_file):
+def remove_string(input_file, output_file, string):
     infile = input_file
     outfile = output_file
-    delete_list = ["-Warped"]
+    delete_list = [string]
     fin = open(infile)
     fout = open(outfile, "w+")
     for line in fin:
@@ -503,13 +504,12 @@ def quality_control(mask_list, target_list, tmp_path, view='default'):
     mask_folder = os.path.join(tmp_path, 'slicesdir')
     mask_newfolder = os.path.join(tmp_path, 'slicesdir_' + view)
     if os.path.exists(mask_newfolder):
-        process= subprocess.Popen('rm -rf '+ mask_newfolder, shell=True)
+        process = subprocess.Popen('rm -rf '+ mask_newfolder, shell=True)
         process.wait()
 
     process = subprocess.Popen('mv ' + mask_folder + " " + mask_newfolder, shell=True)
     process.wait()
     
-
 
 if __name__ == '__main__':
 
@@ -538,6 +538,8 @@ if __name__ == '__main__':
     parser.add_argument("-qc", type=str2bool, dest='snap', nargs='?',
                         const=True, default=False,
                         help="open snapshots in your web browser (yes/true/y/1)")
+
+    parser.add_argument('-p', type=int, dest='percentile', default=99, help='Percentile to normalize Image [0, 1]')
 
     parser.add_argument('-nproc', type=int, dest='cr', default=8, help='number of processes to use')
 
@@ -627,9 +629,24 @@ if __name__ == '__main__':
                 transformed_cases.append(subject_ANTS[0])
                 omat_list.append(subject_ANTS[1])
 
-            pool_norm = Pool(processes=args.cr)
-            data_n = pool_norm.map(normalize, transformed_cases)
-            pool_norm.close()
+            #pool_norm = Pool(processes=args.cr)
+            #data_n = pool_norm.map(normalize, transformed_cases)
+            #pool_norm.close()
+
+            with Manager() as manager:
+                data_n = manager.list() 
+                norm_jobs = []             
+                for i in range(0, len(target_list)):
+                    p_norm = mp.Process(target=normalize, args=(transformed_cases[i],
+                                                             args.percentile, data_n))
+                    norm_jobs.append(p_norm)
+                    p_norm.start()
+        
+                for process in norm_jobs:
+                    process.join()
+
+                data_n = list(data_n)
+
             
             count = 0
             for b0_nifti in data_n:
@@ -668,19 +685,23 @@ if __name__ == '__main__':
             np.save(cases_file_c, merge_c)
             np.save(cases_file_a, merge_a)
 
+            normalized_file = storage + "/norm_cases_" + str(os.getpid()) + ".txt"
             registered_file = storage + "/ants_cases_" + str(os.getpid()) + ".txt"
             mat_file = storage + "/mat_cases_" + str(os.getpid()) + ".txt"
             target_file = storage + "/target_cases_" + str(os.getpid()) + ".txt"
 
-            with open(registered_file, "w") as reg_dwi:
-                for item in transformed_cases:
-                    reg_dwi.write(item + "\n")
+            with open(normalized_file, "w") as norm_dwi:
+                for item in data_n:
+                    norm_dwi.write(item + "\n")
 
-            with open(mat_file, "w") as mat_dwi:
-                for item in omat_list:
-                    mat_dwi.write(item + "\n")
+            remove_string(normalized_file, registered_file, "-normalized")
+            remove_string(registered_file, target_file, "-Warped")
 
-            remove_string(registered_file, target_file)
+            with open(target_file) as f:
+                newText=f.read().replace('.nii.gz', '-0GenericAffine.mat')
+
+            with open(mat_file, "w") as f:
+                f.write(newText)
 
             end_preprocessing_time = datetime.datetime.now()
             total_preprocessing_time = end_preprocessing_time - start_total_time
