@@ -1,32 +1,20 @@
-import keras
-from keras import optimizers
-import scipy as sp
-import scipy.misc, scipy.ndimage.interpolation
-#from medpy import metric
+import argparse
 import numpy as np
 import os
-from keras import losses
-import tensorflow as tf
+import sys
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    import tensorflow as tf
+    
+import keras
 from keras.models import Model
 from keras.layers import Input,merge, concatenate, Conv2D, MaxPooling2D, Activation, UpSampling2D,Dropout,Conv2DTranspose,add,multiply
 from keras.layers.normalization import BatchNormalization as bn
-from keras.callbacks import ModelCheckpoint, TensorBoard
-from keras.optimizers import RMSprop
-from keras import regularizers 
-from keras import backend as K
-from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint
-import tensorflow as tf
-#from keras.applications import Xception
-from keras.utils import multi_gpu_model
-import random
-import numpy as np 
-from keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger
-import nibabel as nib
-os.environ['CUDA_VISIBLE_DEVICES']="1"
-
-import numpy as np
-import cv2
+from keras.optimizers import RMSprop, Adam
+from keras import regularizers, losses, backend as K
+from keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger, ModelCheckpoint, TensorBoard
+os.environ['CUDA_VISIBLE_DEVICES']="0"
 
 smooth = 1.
 def dice_coef(y_true, y_pred):
@@ -578,9 +566,6 @@ def Comp_U_Net(input_shape,learn_rate=1e-3):
                                          xfinal_op,
                                          res_1_final_op,
                                      ])
-    
-    #print("Training using multiple GPUs...")
-    #model = multi_gpu_model(model, gpus=1)
 
     model.compile(optimizer=keras.optimizers.Adam(lr=1e-5),loss={'final_op':dice_coef_loss,
                                                 'xfinal_op':neg_dice_coef_loss,
@@ -590,44 +575,53 @@ def Comp_U_Net(input_shape,learn_rate=1e-3):
 
 #----------------------------------------------------Main--------------------------------------------------#
 
-train_x = '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/axial-traindata-dwib0.npy'
-train_y = '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/axial-traindata-mask.npy'
 
-model = Comp_U_Net(input_shape=(256,256,1))
-#print(model.summary())
+def train_model(data_params, train_params, common_params):
 
-x_train = np.load(train_x)
-y_train = np.load(train_y)
 
-x_train=x_train.reshape(x_train.shape+(1,))
-y_train=y_train.reshape(y_train.shape+(1,))
+    training_data_folder = data_params['data_dir'].rstrip('/')
 
-# Log output
-print x_train.shape
-print y_train.shape
+    train_x = training_data_folder + '/' + data_params['train_data_file']
+    train_y = training_data_folder + '/' + data_params['train_label_file']
 
-#tensorboard = TensorBoard('/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/logs', histogram_freq=1)
-csv_logger = CSVLogger('axial.csv', append=True, separator=';')
+    model = Comp_U_Net(input_shape=(256,256,1), learn_rate=train_params['learning_rate'])
+    # print(model.summary())
 
-# checkpoint
-filepath="weights-axial-improvement-{epoch:02d}.h5"
-checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, save_weights_only=True)
+    x_train = np.load(train_x)
+    y_train = np.load(train_y)
 
-# Trains the model for a given number of epochs (iterations on a dataset).
-history_callback = model.fit([x_train], 
-                             [y_train,y_train,y_train], 
-                             validation_split=0.1,
-                             batch_size=4, 
-                             epochs=10,
-                             shuffle=True, 
-                             verbose=1, 
-                             callbacks=[csv_logger, checkpoint])
+    x_train=x_train.reshape(x_train.shape+(1,))
+    y_train=y_train.reshape(y_train.shape+(1,))
 
-import h5py
-# serialize model to JSON
-model_json = model.to_json()
-with open("/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/CompNetBasicModel1.json", "w") as json_file:
-    json_file.write(model_json)
-# serialize weights to HDF5
-model.save_weights("/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/CompNetBasicModel_weights_DWI_axial_final.h5")
-print("Saved model to disk")
+    # Log output
+    print ("Training dwi volume shape: ", x_train.shape)
+    print ("Training dwi mask volume shape: ", y_train.shape)
+
+    view = train_params['principal_axis']
+
+    os.makedirs(common_params['log_dir'], exist_ok= True)
+    csv_logger = CSVLogger(common_params['log_dir'] + '/' + view + '.csv', append=True, separator=';')
+
+    # checkpoint
+    os.makedirs(common_params['save_model_dir'], exist_ok= True)
+    filepath = common_params['save_model_dir'] + "/weights-" + view + "-improvement-{epoch:02d}.h5"
+    checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, save_weights_only=True)
+
+    # Trains the model for a given number of epochs (iterations on a dataset).
+    history_callback = model.fit([x_train],
+                                 [y_train,y_train,y_train],
+                                 validation_split=train_params['validation_split'],
+                                 batch_size=train_params['train_batch_size'],
+                                 epochs=train_params['num_epochs'],
+                                 shuffle=train_params['shuffle_data'],
+                                 verbose=1,
+                                 callbacks=[csv_logger, checkpoint])
+
+    import h5py
+    # serialize model to JSON
+    model_json = model.to_json()
+    with open(common_params['save_model_dir'] + "/CompNetBasicModel.json", "w") as json_file:
+        json_file.write(model_json)
+    # serialize weights to HDF5
+    model.save_weights(common_params['save_model_dir'] + "/" + view + "-compnet_final_weight.h5")
+    print("Saved model to disk location: ", common_params['save_model_dir'])

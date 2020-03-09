@@ -1,0 +1,17 @@
+name: dmri_seg
+
+channels:
+    - conda-forge
+    - pnlbwh
+
+dependencies:
+    - python==3.6
+    - tensorflow==1.12.0
+    - keras==2.2.4
+    - numpy==1.16.4
+    - ants
+    - nibabel>=2.2.1
+    - pip
+    - pip:
+        - scikit-image==0.16.2
+        - git+https://github.com/pnlbwh/conversion.git
