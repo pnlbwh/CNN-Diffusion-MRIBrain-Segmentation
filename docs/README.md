@@ -30,6 +30,7 @@ Table of Contents
       * [1. Model Architecture](#1-model-architecture)
       * [2. Multi View Aggregation:](#2-multi-view-aggregation)
       * [3. Clean up](#3-clean-up)
+   * [Troubleshooting](#troubleshooting)
    * [Issues](#issues)
    * [Reference](#reference)
 
@@ -85,22 +86,26 @@ Activate the conda environment:
 
 The software is written intelligently to work with or without GPU support. Two *yml* environment files 
 are provided to facilitate creation of `dmri_seg` conda environment.
+
    
 ## 2. Conda environment
    
 ### CPU only
 
-> conda env create -f environment_cpu.yml
+    conda env create -f environment_cpu.yml
 
 
 ### GPU support
 
-> conda env create -f environment_gpu.yml
+    conda env create -f environment_gpu.yml
        
 Finally, activate the conda environment using:
 
     conda activate dmri_seg
     
+
+If you run into any error, please see [Troubleshooting](#troubleshooting).
+
 
 ## 3. CUDA environment
 
@@ -198,7 +203,7 @@ Then, we normalize b0 image to the range [0,1] with respect to its highest inten
 Same clipping is performed to the mask. 
 
     src/preprocess_b0.py -i b0_list.txt
-    src/preprocess_mask.py -i mask_list.txt    
+    src/preprocess_mask.py -i mask_list.txt
 
 Upon preprocessing, b0 data are appended to:
     
@@ -292,6 +297,15 @@ See [Reference #2](#reference) for details of this method.
 The aggregated mask is cleaned up using a [Python translated version](../src/maskfilter) of [maskfilter from mrtrix](https://mrtrix.readthedocs.io/en/latest/reference/commands/maskfilter.html). 
 In brief, there remain islands of non brain region in the aggregated mask. The above filter applies a series of morphological 
 operation i.e. erosion and dilation to clean up the mask.
+
+
+# Troubleshooting
+
+1. If you get any error while building `dmri_seg` conda environment, updating conda first and retrying should be helpful:
+
+    conda update -y -n base -c defaults conda
+
+See https://github.com/conda/conda/issues/8661 for details.
 
 # Issues
 
