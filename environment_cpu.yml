@@ -9,9 +9,9 @@ dependencies:
     - tensorflow==1.12.0
     - keras==2.2.4
     - numpy==1.16.4
-    - nibabel==2.2.1
-    - scikit-image==0.16.2
     - ants
+    - nibabel>=2.2.1
     - pip
     - pip:
+        - scikit-image==0.16.2
         - git+https://github.com/pnlbwh/conversion.git
