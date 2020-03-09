@@ -19,6 +19,7 @@ Table of Contents
          * [GPU support](#gpu-support)
       * [3. CUDA environment](#3-cuda-environment)
       * [4. Download models](#4-download-models)
+      * [5. mrtrix](#5-mrtrix)
    * [Running the pipeline](#running-the-pipeline)
       * [Prediction](#prediction)
       * [Training](#training)
@@ -134,6 +135,18 @@ as follows:
     tar -xzvf model_folder.tar.gz
 
 They will be extracted to `CNN-Diffusion-MRIBrain-Segmentation/model_folder` directory.
+
+
+## 5. mrtrix
+
+This software makes use of only one binary from mrtrix, `maskfilter`. If you already have mrtrix installed on your 
+system, you can use it. Moreover, you can follow [this](https://mrtrix.readthedocs.io/en/latest/installation/linux_install.html) instruction to install mrtrix.
+However, if you are unable to use/install mrtrix, just set the following envrionment variable and the software will 
+use a Python translated version of the above binary.
+
+    export FILTER_METHOD=PYTHON
+    
+See [Clean up](#3.-clean-up) for details.
 
 
 # Running the pipeline
@@ -294,9 +307,13 @@ See [Reference #2](#reference) for details of this method.
 
 ## 3. Clean up
 
-The aggregated mask is cleaned up using a [Python translated version](../src/maskfilter) of [maskfilter from mrtrix](https://mrtrix.readthedocs.io/en/latest/reference/commands/maskfilter.html). 
+The aggregated mask is cleaned up using a [maskfilter from mrtrix](https://mrtrix.readthedocs.io/en/latest/reference/commands/maskfilter.html). 
 In brief, there remain islands of non brain region in the aggregated mask. The above filter applies a series of morphological 
-operation i.e. erosion and dilation to clean up the mask.
+operation i.e. erosion and dilation to clean up the mask. If mrtrix installation is a problem for you, 
+you can use [Python translated version](../src/maskfilter) of maskfilter provided with this software by setting the 
+environment variable:
+
+    export FILTER_METHOD=PYTHON
 
 
 # Troubleshooting
