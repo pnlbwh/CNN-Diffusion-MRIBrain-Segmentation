@@ -322,6 +322,8 @@ environment variable:
 
     
     conda update -y -n base -c defaults conda
+    
+    
 
 See https://github.com/conda/conda/issues/8661 for details.
 
