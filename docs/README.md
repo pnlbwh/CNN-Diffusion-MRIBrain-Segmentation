@@ -320,10 +320,9 @@ environment variable:
 
 1. If you get any error while building `dmri_seg` conda environment, updating conda first and retrying should be helpful:
 
-    
-`conda update -y -n base -c defaults conda`
-    
-    
+```    
+conda update -y -n base -c defaults conda
+```
 
 See https://github.com/conda/conda/issues/8661 for details.
 
