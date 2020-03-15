@@ -131,7 +131,7 @@ Download model architecture, weights and IIT mean b0 template from https://githu
 as follows:
 
     cd CNN-Diffusion-MRIBrain-Segmentation
-    wget https://github.com/pnlbwh/Harmonization-Python/releases/download/v0.2/model_folder.tar.gz
+    wget https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases/download/v0.2/model_folder.tar.gz
     tar -xzvf model_folder.tar.gz
 
 They will be extracted to `CNN-Diffusion-MRIBrain-Segmentation/model_folder` directory.
