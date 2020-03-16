@@ -30,12 +30,12 @@ IMAGELIST=$testDataDir/imagelist.txt
 MASKLIST=$testDataDir/masklist.txt
 B0LIST=$testDataDir/b0list.txt
 WarpedB0LIST=$testDataDir/warped_b0list.txt
-WarpedMaskLIST=$testDataDir/warped_masklist.txt
+WarpedMASKLIST=$testDataDir/warped_masklist.txt
 CASELIST=$testDataDir/caselist.txt
 
 if [ -f $IMAGELIST ]
 then
-    rm $IMAGELIST $MASKLIST $B0LIST $WarpedB0LIST $WarpedMaskLIST $CASELIST
+    rm $IMAGELIST $MASKLIST $B0LIST $WarpedB0LIST $WarpedMASKLIST $CASELIST
 fi
 
 
@@ -57,7 +57,7 @@ do
         echo `pwd`/${prefix}_mask.nii.gz >> $MASKLIST
         echo `pwd`/${prefix}_b0.nii.gz >> $B0LIST
         echo `pwd`/${prefix}_b0-Warped.nii.gz >> $WarpedB0LIST
-        echo `pwd`/${prefix}_b0-Warped-mask.nii.gz >> $WarpedMaskLIST
+        echo `pwd`/${prefix}_b0-Warped-mask.nii.gz >> $WarpedMASKLIST
         echo $prefix >> $CASELIST
     fi
 done
@@ -74,8 +74,8 @@ export FILTER_METHOD=PYTHON
 
 # training
 ../src/registration.py -b0 $B0LIST -mask $MASKLIST -ref ../model_folder/IITmean_b0_256.nii.gz
-../src/preprocess_b0.py -i $B0LIST
-../src/preprocess_mask.py -i $MASKLIST
+../src/preprocess_b0.py -i $WarpedB0LIST
+../src/preprocess_mask.py -i $WarpedMASKLIST
 
 
 echo -e "
@@ -102,7 +102,7 @@ export COMPNET_CONFIG=$testDataDir/settings.ini
 ../src/train.py
 
 # prediction
-# ../pipeline/dwi_masking.py -i $IMAGELIST -nproc 5 -f model_folder_test/
-
+cp ../model_folder/IITmean_b0_256.nii.gz model_folder_test/
+../pipeline/dwi_masking.py -i $IMAGELIST -nproc 5 -f model_folder_test/
 
 
