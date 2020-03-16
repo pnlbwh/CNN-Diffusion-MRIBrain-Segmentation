@@ -73,7 +73,7 @@ export FILTER_METHOD=PYTHON
 
 
 # training
-../src/registration.py -b0 $B0LIST -mask $MASKLIST -ref ../model_folder/IITmean_b0256.nii.gz
+../src/registration.py -b0 $B0LIST -mask $MASKLIST -ref ../model_folder/IITmean_b0_256.nii.gz
 ../src/preprocess_b0.py -i $B0LIST
 ../src/preprocess_mask.py -i $MASKLIST
 
