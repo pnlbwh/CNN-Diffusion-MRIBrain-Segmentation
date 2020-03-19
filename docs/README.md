@@ -254,18 +254,21 @@ num_epochs = 1
 shuffle_data = "True"
 ```
 
-At the very least, you should edit `save_model_dir`, `log_dir`, and `data_dir` fields. Now define 
+At the very least, you should edit `save_model_dir`, `log_dir`, `data_dir`, and `num_epochs` fields. Now define 
 environment variable `COMPNET_CONFIG` so your own `settings.ini` could be found by `src/train.py` program:
 
     export COMPNET_CONFIG=/path/to/your/settings.ini
-
+    
+    
 Finally, you can use the same `settings.ini` file for training three models corresponding to three 
 principal axes- `sagittal`, `coronal`, and `axial`. For each of the axes, run:
 
-    src/train.py  # for sagittal
-    src/train.py  # for coronal
-    src/train.py  # for axial
+    src/train.py  # for sagittal, num_epochs=9
+    src/train.py  # for coronal, num_epochs=8
+    src/train.py  # for axial, num_epochs=8
 
+
+**NOTE** The above `num_epochs` were found suitable for the models distributed with this software.
 
 `src/train.py` will save three `*-compnet_final_weight.h5` models in `save_model_dir` that you defined in `settings.ini`.
 You can use this `model_folder` for [prediction](#prediction)
