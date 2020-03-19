@@ -56,6 +56,7 @@ with warnings.catch_warnings():
 import multiprocessing as mp
 import re
 import sys
+from glob import glob
 import subprocess
 import argparse, textwrap
 import datetime
@@ -127,16 +128,10 @@ def predict_mask(input_file, trained_folder, view='default'):
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = model_from_json(loaded_model_json)
-
-    optimal = ''
-    if view == 'sagittal':
-        optimal = '09'
-    elif view == 'coronal':
-        optimal = '08'
-    else:
-        optimal = '08'
+       
     # load weights into new model
-    loaded_model.load_weights(trained_folder + '/weights-' + view + '-improvement-' + optimal + '.h5')
+    optimal_model= glob(trained_folder + '/weights-' + view + '-improvement-*.h5')[-1]
+    loaded_model.load_weights(optimal_model)
 
     # evaluate loaded model on test data
     loaded_model.compile(optimizer=Adam(lr=1e-5),
