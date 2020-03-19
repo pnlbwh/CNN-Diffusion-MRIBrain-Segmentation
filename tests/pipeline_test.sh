@@ -19,7 +19,7 @@ else
 fi
 
 rm -rf $prismaDir
-unzip -d $testDataDir $testDataDir/$zipFile 
+unzip -o -d $testDataDir $testDataDir/$zipFile
 
 
 pushd .
@@ -69,7 +69,7 @@ popd
 
 # prediction
 export FILTER_METHOD=PYTHON
-# ../pipeline/dwi_masking.py -i $IMAGELIST -nproc 5 -f ../model_folder/
+../pipeline/dwi_masking.py -i $IMAGELIST -nproc 5 -f ../model_folder/
 
 
 # training
