@@ -67,9 +67,12 @@ popd
 # ================================
 
 
-# prediction
+# prediction based on provided model
 export FILTER_METHOD=PYTHON
 ../pipeline/dwi_masking.py -i $IMAGELIST -nproc 5 -f ../model_folder/
+
+
+# ================================
 
 
 # training
@@ -101,7 +104,17 @@ shuffle_data = \"True\"
 export COMPNET_CONFIG=$testDataDir/settings.ini
 ../src/train.py
 
-# prediction
+sed -i "s/saggittal/coronal/g" $testDataDir/settings.ini
+../src/train.py
+
+sed -i "s/coronal/axial/g" $testDataDir/settings.ini
+../src/train.py
+
+
+# ================================
+
+
+# prediction based on trained model
 cp ../model_folder/IITmean_b0_256.nii.gz model_folder_test/
 ../pipeline/dwi_masking.py -i $IMAGELIST -nproc 5 -f model_folder_test/
 
