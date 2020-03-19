@@ -270,8 +270,11 @@ principal axes- `sagittal`, `coronal`, and `axial`. For each of the axes, run:
 
 **NOTE** The above `num_epochs` were found suitable for the models distributed with this software.
 
-`src/train.py` will save three `*-compnet_final_weight.h5` models in `save_model_dir` that you defined in `settings.ini`.
-You can use this `model_folder` for [prediction](#prediction)
+`src/train.py` will save each epoch `*-compnet_final_weight-*.h5` models in `save_model_dir` that you defined in `settings.ini`.
+You can use this `save_model_dir` for [prediction](#prediction). Note that, the final epoch models are used in prediction by default. 
+If you want to use another epoch models other than the final ones created above, save them in a different directory along with 
+`CompNetBasicModel.json` and `IITmean_b0_256.nii.gz` and use that directory as `save_model_dir` for prediction. As you probably 
+realized already, the three models pertinent to three views would not have to be of the same epoch number.
 
 
 # Method
