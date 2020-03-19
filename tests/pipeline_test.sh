@@ -115,7 +115,7 @@ sed -i "s/coronal/axial/g" $testDataDir/settings.ini
 
 
 # prediction based on trained model
-cp ../model_folder/IITmean_b0_256.nii.gz model_folder_test/
-../pipeline/dwi_masking.py -i $IMAGELIST -nproc 5 -f model_folder_test/
+cp ../model_folder/IITmean_b0_256.nii.gz $testDataDir/model_folder_test/
+../pipeline/dwi_masking.py -i $IMAGELIST -nproc 5 -f $testDataDir/model_folder_test/
 
 
