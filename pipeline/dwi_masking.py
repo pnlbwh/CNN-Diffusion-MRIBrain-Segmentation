@@ -626,10 +626,6 @@ if __name__ == '__main__':
                 transformed_cases.append(subject_ANTS[0])
                 omat_list.append(subject_ANTS[1])
 
-            #pool_norm = Pool(processes=args.cr)
-            #data_n = pool_norm.map(normalize, transformed_cases)
-            #pool_norm.close()
-
             with Manager() as manager:
                 data_n = manager.list() 
                 norm_jobs = []             
