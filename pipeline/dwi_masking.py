@@ -808,4 +808,5 @@ if __name__ == '__main__':
 
         end_total_time = datetime.datetime.now()
         total_t = end_total_time - start_total_time
-print ("Total Time Taken : ", round(int(total_t.seconds)/60, 2), " min")
+        print ("Total Time Taken : ", round(int(total_t.seconds)/60, 2), " min")
+
