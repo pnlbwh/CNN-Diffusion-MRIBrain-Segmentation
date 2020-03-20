@@ -104,7 +104,7 @@ shuffle_data = \"True\"
 export COMPNET_CONFIG=$testDataDir/settings.ini
 ../src/train.py
 
-sed -i "s/saggittal/coronal/g" $testDataDir/settings.ini
+sed -i "s/sagittal/coronal/g" $testDataDir/settings.ini
 ../src/train.py
 
 sed -i "s/coronal/axial/g" $testDataDir/settings.ini
