@@ -56,6 +56,7 @@ with warnings.catch_warnings():
 import multiprocessing as mp
 import re
 import sys
+from glob import glob
 import subprocess
 import argparse, textwrap
 import datetime
@@ -127,16 +128,10 @@ def predict_mask(input_file, trained_folder, view='default'):
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = model_from_json(loaded_model_json)
-
-    optimal = ''
-    if view == 'sagittal':
-        optimal = '09'
-    elif view == 'coronal':
-        optimal = '08'
-    else:
-        optimal = '08'
+       
     # load weights into new model
-    loaded_model.load_weights(trained_folder + '/weights-' + view + '-improvement-' + optimal + '.h5')
+    optimal_model= glob(trained_folder + '/weights-' + view + '-improvement-*.h5')[-1]
+    loaded_model.load_weights(optimal_model)
 
     # evaluate loaded model on test data
     loaded_model.compile(optimizer=Adam(lr=1e-5),
@@ -631,10 +626,6 @@ if __name__ == '__main__':
                 transformed_cases.append(subject_ANTS[0])
                 omat_list.append(subject_ANTS[1])
 
-            #pool_norm = Pool(processes=args.cr)
-            #data_n = pool_norm.map(normalize, transformed_cases)
-            #pool_norm.close()
-
             with Manager() as manager:
                 data_n = manager.list() 
                 norm_jobs = []             
@@ -817,4 +808,5 @@ if __name__ == '__main__':
 
         end_total_time = datetime.datetime.now()
         total_t = end_total_time - start_total_time
-print ("Total Time Taken : ", round(int(total_t.seconds)/60, 2), " min")
+        print ("Total Time Taken : ", round(int(total_t.seconds)/60, 2), " min")
+
