@@ -127,12 +127,15 @@ Open a new terminal for the changes to take effect.
 
 ## 4. Download models
 
-Download model architecture, weights and IIT mean b0 template from https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases 
-as follows:
+Download model architecture, weights and IIT mean b0 template from 
+https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases as follows:
 
     cd CNN-Diffusion-MRIBrain-Segmentation
-    wget https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases/download/v0.2/model_folder.tar.gz
+    wget https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases/download/v0.3/model_folder.tar.gz
     tar -xzvf model_folder.tar.gz
+    cd model_folder
+    wget https://www.nitrc.org/frs/download.php/11266/IITmean_b0.nii.gz
+
 
 They will be extracted to `CNN-Diffusion-MRIBrain-Segmentation/model_folder` directory.
 
@@ -349,4 +352,7 @@ NeuroImage 186 (2019): 713-727.
 3. Billah, Tashrif; Bouix; Sylvain; Rathi, Yogesh; Various MRI Conversion Tools, https://github.com/pnlbwh/conversion, 2019, 
 DOI: 10.5281/zenodo.2584003
 
+4. Zhang S, Arfanakis K. "Evaluation of standardized and study-specific diffusion tensor imaging templates of 
+the adult human brain: Template characteristics, spatial normalization accuracy, and detection of small 
+inter-group FA differences." Neuroimage 2018;172:40-50.
 
