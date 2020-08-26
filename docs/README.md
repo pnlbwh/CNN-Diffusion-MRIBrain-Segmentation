@@ -343,13 +343,13 @@ We shall get back to you as soon as we can.
 
 # Reference
 
-1. Dey, Raunak, and Yi Hong. "CompNet: Complementary segmentation network for brain MRI extraction." 
+1. Dey, Raunak and Hong, Yi. "CompNet: Complementary segmentation network for brain MRI extraction." 
 International Conference on Medical Image Computing and Computer-Assisted Intervention. Springer, Cham, 2018.
 
 2. Roy, Abhijit Guha, et al. "QuickNAT: A fully convolutional network for quick and accurate segmentation of neuroanatomy." 
 NeuroImage 186 (2019): 713-727.
 
-3. Billah, Tashrif; Bouix; Sylvain; Rathi, Yogesh; Various MRI Conversion Tools, https://github.com/pnlbwh/conversion, 2019, 
+3. Billah, Tashrif; Bouix, Sylvain; Rathi, Yogesh; Various MRI Conversion Tools, https://github.com/pnlbwh/conversion, 2019, 
 DOI: 10.5281/zenodo.2584003
 
 4. Zhang S, Arfanakis K. "Evaluation of standardized and study-specific diffusion tensor imaging templates of 
