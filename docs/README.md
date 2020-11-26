@@ -134,7 +134,7 @@ https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases as follow
     wget https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases/download/v0.3/model_folder.tar.gz
     tar -xzvf model_folder.tar.gz
     cd model_folder
-    wget https://www.nitrc.org/frs/download.php/11266/IITmean_b0.nii.gz
+    wget https://www.nitrc.org/frs/download.php/11290/IITmean_b0_256.nii.gz
 
 
 They will be extracted to `CNN-Diffusion-MRIBrain-Segmentation/model_folder` directory.
