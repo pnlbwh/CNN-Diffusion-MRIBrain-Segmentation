@@ -293,13 +293,21 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
         output_filter_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_FilteredMask.nii.gz'
         output_mask_filtered = path.join(output_dir, output_filter_file)
 
-        print('Cleaning up ', CNN_output_file)
-        if not os.getenv('FILTER_METHOD'):
-            mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
+        if args.filter:
+            print('Cleaning up ', CNN_output_file)
+            
+            if args.filter=='mrtrix':
+                mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
+
+            elif args.filter=='scipy':
+                mask_filter = path.join(path.dirname(__file__),'../src/maskfilter.py') + f' {CNN_output_file} 2 {output_mask_filtered}'
+        
+            process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
+
         else:
-            mask_filter = path.join(path.dirname(__file__),'../src/maskfilter') + f' {CNN_output_file} 2 {output_mask_filtered}'
-        process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
+            output_mask_filtered= CNN_output_file
+
 
         print(output_mask_filtered)
         img = nib.load(output_mask_filtered)
@@ -539,6 +547,10 @@ if __name__ == '__main__':
     parser.add_argument('-p', type=int, dest='percentile', default=99, help='Percentile to normalize Image [0, 1]')
 
     parser.add_argument('-nproc', type=int, dest='cr', default=8, help='number of processes to use')
+    
+    parser.add_argument('-filter', choices=['scipy','mrtrix'], help='''perform morphological operation on the 
+CNN generated mask to clean up holes and islands, can be done through a provided script (scipy) 
+or MRtrix3 maskfilter (mrtrix)''')
 
     try:
         args = parser.parse_args()
