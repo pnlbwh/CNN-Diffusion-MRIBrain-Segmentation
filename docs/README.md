@@ -144,11 +144,9 @@ They will be extracted to `CNN-Diffusion-MRIBrain-Segmentation/model_folder` dir
 
 This software makes use of only one binary from mrtrix, `maskfilter`. If you already have mrtrix installed on your 
 system, you can use it. Moreover, you can follow [this](https://mrtrix.readthedocs.io/en/latest/installation/linux_install.html) instruction to install mrtrix.
-However, if you are unable to use/install mrtrix, just set the following envrionment variable and the software will 
+However, if you are unable to use/install mrtrix, just set `-filter scipy` argument and the software will 
 use a Python translated version of the above binary.
 
-    export FILTER_METHOD=PYTHON
-    
 See [Clean up](#3.-clean-up) for details.
 
 
@@ -316,13 +314,10 @@ See [Reference #2](#reference) for details of this method.
 
 ## 3. Clean up
 
-The aggregated mask is cleaned up using a [maskfilter from mrtrix](https://mrtrix.readthedocs.io/en/latest/reference/commands/maskfilter.html). 
+The aggregated mask can be cleaned up using a [maskfilter from mrtrix](https://mrtrix.readthedocs.io/en/latest/reference/commands/maskfilter.html) by `-filter mrtrix` argument. 
 In brief, there remain islands of non brain region in the aggregated mask. The above filter applies a series of morphological 
 operation i.e. erosion and dilation to clean up the mask. If mrtrix installation is a problem for you, 
-you can use [Python translated version](../src/maskfilter) of maskfilter provided with this software by setting the 
-environment variable:
-
-    export FILTER_METHOD=PYTHON
+you can use [Python translated version](../src/maskfilter.py) of maskfilter provided with this software by `-filter scipy` argument. If `-filter` is not used, then aggregated mask is returned.
 
 
 # Troubleshooting
