@@ -147,7 +147,7 @@ system, you can use it. Moreover, you can follow [this](https://mrtrix.readthedo
 However, if you are unable to use/install mrtrix, just set `-filter scipy` argument and the software will 
 use a Python translated version of the above binary.
 
-See [Clean up](#3.-clean-up) for details.
+See [Clean up](#3-clean-up) for details.
 
 
 # Running the pipeline
@@ -317,7 +317,7 @@ See [Reference #2](#reference) for details of this method.
 The aggregated mask can be cleaned up using a [maskfilter from mrtrix](https://mrtrix.readthedocs.io/en/latest/reference/commands/maskfilter.html) by `-filter mrtrix` argument. 
 In brief, there remain islands of non brain region in the aggregated mask. The above filter applies a series of morphological 
 operation i.e. erosion and dilation to clean up the mask. If mrtrix installation is a problem for you, 
-you can use [Python translated version](../src/maskfilter.py) of maskfilter provided with this software by `-filter scipy` argument. If `-filter` is not used, then aggregated mask is returned.
+you can use [Python translated version](../src/maskfilter.py) of maskfilter provided with this software by `-filter scipy` argument. If `-filter` is not used, then the aggregated mask is returned.
 
 
 # Troubleshooting
