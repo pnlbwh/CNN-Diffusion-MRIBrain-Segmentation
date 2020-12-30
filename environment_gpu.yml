@@ -13,6 +13,7 @@ dependencies:
     - numpy==1.16.4
     - nibabel>=2.2.1
     - ants
+    - scikit-image
     - pip
     - pip:
         - gputil
