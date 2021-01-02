@@ -20,6 +20,7 @@ Table of Contents
       * [3. CUDA environment](#3-cuda-environment)
       * [4. Download models](#4-download-models)
       * [5. mrtrix](#5-mrtrix)
+   * [Singularity container](#singularity-container)
    * [Running the pipeline](#running-the-pipeline)
       * [Prediction](#prediction)
       * [Training](#training)
@@ -149,6 +150,29 @@ use a Python translated version of the above binary.
 
 See [Clean up](#3-clean-up) for details.
 
+
+# Singularity container
+
+The dependencies in [environment_cpu.yml](environment_cpu.yml) have been found to be volatile. So we have archived 
+the dependencies of this software in a [Singularity](Singularity) container. After you have downloaded the models, 
+you can use the container as follows:
+
+    cd CNN-Diffusion-MRIBrain-Segmentation
+    wget 
+    
+    # verify that it works
+    singularity run dmri_seg.sif dwi_masking.py --help
+    
+    # use it to generate brain masks
+    singularity run \
+    --bind /path/to/data:/data \
+    --bind model_folder:/home/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/model_folder \
+    dmri_seg.sif \
+    dwi_masking.py -i /data/dwi_list.txt -f /home/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/model_folder
+
+
+Please continue reading below to learn more about `dwi_list.txt`. Also, note that the container supports only `-filter scipy` option.
+    
 
 # Running the pipeline
 
