@@ -40,14 +40,7 @@ From: centos:7.5.1804
     #
     # create conda environment
     git clone https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation.git && \
-    cd CNN-Diffusion-MRIBrain-Segmentation && \
-    conda env create -f environment_cpu.yml && \
-    wget https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases/download/v0.3/model_folder.tar.gz && \
-    tar -xzvf model_folder.tar.gz && \
-    rm -f model_folder.tar.gz && \
-    cd model_folder && \
-    wget https://www.nitrc.org/frs/download.php/11290/IITmean_b0_256.nii.gz && \
-    cd $HOME && \
+    conda env create -f CNN-Diffusion-MRIBrain-Segmentation/environment_cpu.yml && \
     #
     # install dcm2niix
     conda install -c anaconda cmake && \
