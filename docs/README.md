@@ -153,10 +153,11 @@ See [Clean up](#3-clean-up) for details.
 
 # Singularity container
 
-The dependencies in [environment_cpu.yml](environment_cpu.yml) have been found to be volatile. So we have archived 
-the dependencies of this software in a [Singularity](Singularity) container. After you have downloaded the models, 
-you can use the container as follows:
+The dependencies in [environment_cpu.yml](../environment_cpu.yml) have been found to be volatile. So we have archived 
+the dependencies of this software in a [Singularity](../Singularity) container. After you have downloaded the models, 
+you can download and use the it as follows:
 
+    # download the container
     cd CNN-Diffusion-MRIBrain-Segmentation
     wget 
     
