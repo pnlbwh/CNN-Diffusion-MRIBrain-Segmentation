@@ -59,9 +59,11 @@ From: centos:7.5.1804
     #
     # clean up
     rm -rf /tmp/* /var/tmp/* $HOME/.cache/pip/ $HOME/Miniconda3-latest-Linux-x86_64.sh && \
-    conda clean -y --all
+    conda clean -y --all && \
     #
-    # change permission
+    # change permission so a user is able to run tests
+    # to be able to run tests, increase tmpfs size in /etc/singularity/singularity.conf
+    # sessiondir max size = 8000
     chmod -R o+w /home/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/tests/
     
 %environment
