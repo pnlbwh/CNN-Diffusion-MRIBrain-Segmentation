@@ -159,7 +159,7 @@ you can download and use the it as follows:
 
     # download the container
     cd CNN-Diffusion-MRIBrain-Segmentation
-    wget 
+    wget https://www.dropbox.com/s/rpc8ighcxqvzete/dmri_seg.sif
     
     # verify that it works
     singularity run dmri_seg.sif dwi_masking.py --help
@@ -172,7 +172,7 @@ you can download and use the it as follows:
     dwi_masking.py -i /data/dwi_list.txt -f /home/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/model_folder
 
 
-Please continue reading below to learn more about `dwi_list.txt`. Also, note that the container supports only `-filter scipy` option.
+Please continue reading below to learn more about `dwi_list.txt`. Also note that, the container supports only `-filter scipy` option.
     
 
 # Running the pipeline
