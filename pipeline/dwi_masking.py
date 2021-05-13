@@ -456,14 +456,18 @@ def pre_process(input_file, target_list, b0_threshold=50.):
 
         inPrefix= input_file.split('.nii')[0]
         b0_nii= path.join(inPrefix+ '_bse.nii.gz')
-
-        print("Extracting b0 volume...")
         
         dwi= nib.load(input_file)
-        # bvals= np.array(read_bvals(input_file.split('.nii')[0]+ '.bval'))
-        # where_b0= np.where(bvals <= b0_threshold)[0]
-        # b0= dwi.get_data()[...,where_b0].mean(-1)
-        b0= dwi.get_fdata()
+
+        if len(dwi.shape)>3:
+            print("Extracting b0 volume...")
+            bvals= np.array(read_bvals(input_file.split('.nii')[0]+ '.bval'))
+            where_b0= np.where(bvals <= b0_threshold)[0]
+            b0= dwi.get_data()[...,where_b0].mean(-1)
+        else:
+            print("Loading b0 volume...")
+            b0= dwi.get_fdata()
+
         np.nan_to_num(b0).clip(min= 0., out= b0)
         nib.Nifti1Image(b0, affine= dwi.affine, header= dwi.header).to_filename(b0_nii)
 
