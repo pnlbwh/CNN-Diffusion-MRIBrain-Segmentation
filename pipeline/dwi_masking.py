@@ -528,7 +528,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', action='store', dest='dwi', type=str,
-                        help="txt file containing list of /path/to/dwi, one path in each line")
+                        help="txt file containing list of /path/to/dwi or /path/to/b0, one path in each line")
 
     parser.add_argument('-f', action='store', dest='model_folder', type=str,
                         help="folder containing the trained models")
@@ -549,7 +549,8 @@ if __name__ == '__main__':
                         const=True, default=False,
                         help="open snapshots in your web browser (yes/true/y/1)")
 
-    parser.add_argument('-p', type=int, dest='percentile', default=99, help='Percentile to normalize Image [0, 1]')
+    parser.add_argument('-p', type=int, dest='percentile', default=99, help='''The percentile of image 
+intensity value to be used as a threshold for normalizing a b0 image to [0,1]''')
 
     parser.add_argument('-nproc', type=int, dest='cr', default=8, help='number of processes to use')
     
