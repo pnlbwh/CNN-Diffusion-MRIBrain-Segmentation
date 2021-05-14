@@ -184,10 +184,11 @@ Prediction refers to creation of masks based on pre-trained model. This is the c
     
     pipeline/dwi_masking.py -i dwi_list.txt -f model_folder
     pipeline/dwi_masking.py -i dwi_list.txt -f model_folder -nproc 16
+    pipeline/dwi_masking.py -i b0_list.txt -f model_folder
     
-* `dwi_list.txt` should contain the full path to the diffusion volumes
+* `dwi_list.txt` and `b0_list.txt` must contain full paths to diffusion and b0 volumes respectively
 
-* Each created mask is saved in directory its diffusion volume with name `dwib0_{PREFIX}-multi_BrainMask.nii.gz`
+* Each created mask is saved in the directory of input volume with name `dwib0_{PREFIX}-multi_BrainMask.nii.gz`
 
 
 ## Training
