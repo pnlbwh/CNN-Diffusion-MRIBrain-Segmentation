@@ -456,13 +456,18 @@ def pre_process(input_file, target_list, b0_threshold=50.):
 
         inPrefix= input_file.split('.nii')[0]
         b0_nii= path.join(inPrefix+ '_bse.nii.gz')
-
-        print("Extracting b0 volume...")
         
         dwi= nib.load(input_file)
-        bvals= np.array(read_bvals(input_file.split('.nii')[0]+ '.bval'))
-        where_b0= np.where(bvals <= b0_threshold)[0]
-        b0= dwi.get_data()[...,where_b0].mean(-1)
+
+        if len(dwi.shape)>3:
+            print("Extracting b0 volume...")
+            bvals= np.array(read_bvals(input_file.split('.nii')[0]+ '.bval'))
+            where_b0= np.where(bvals <= b0_threshold)[0]
+            b0= dwi.get_data()[...,where_b0].mean(-1)
+        else:
+            print("Loading b0 volume...")
+            b0= dwi.get_fdata()
+
         np.nan_to_num(b0).clip(min= 0., out= b0)
         nib.Nifti1Image(b0, affine= dwi.affine, header= dwi.header).to_filename(b0_nii)
 
@@ -523,7 +528,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', action='store', dest='dwi', type=str,
-                        help="txt file containing list of /path/to/dwi, one path in each line")
+                        help="txt file containing list of /path/to/dwi or /path/to/b0, one path in each line")
 
     parser.add_argument('-f', action='store', dest='model_folder', type=str,
                         help="folder containing the trained models")
@@ -544,7 +549,8 @@ if __name__ == '__main__':
                         const=True, default=False,
                         help="open snapshots in your web browser (yes/true/y/1)")
 
-    parser.add_argument('-p', type=int, dest='percentile', default=99, help='Percentile to normalize Image [0, 1]')
+    parser.add_argument('-p', type=int, dest='percentile', default=99, help='''The percentile of image 
+intensity value to be used as a threshold for normalizing a b0 image to [0,1]''')
 
     parser.add_argument('-nproc', type=int, dest='cr', default=8, help='number of processes to use')
     

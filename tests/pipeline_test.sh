@@ -70,7 +70,7 @@ popd
 # prediction based on provided model
 ../pipeline/dwi_masking.py -i $IMAGELIST -nproc 5 -f ../model_folder/
 ../pipeline/dwi_masking.py -i $IMAGELIST -nproc 5 -f ../model_folder/ -filter scipy
-
+../pipeline/dwi_masking.py -i $B0LIST -nproc 5 -f ../model_folder/
 
 # ================================
 
