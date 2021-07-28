@@ -501,7 +501,7 @@ def quality_control(mask_list, target_list, tmp_path, view='default'):
     for i in range(0, len(mask_list)):
         str1 = target_list[i]
         str2 = mask_list[i]
-        slices += str1 + " " + str2 + " "
+        slices += path.basename(str1) + " " + path.basename(str2) + " "
 
     final = "slicesdir -o" + slices
     dir_bak = os.getcwd()
