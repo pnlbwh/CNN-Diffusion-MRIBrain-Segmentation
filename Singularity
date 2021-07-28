@@ -51,7 +51,7 @@ From: centos:7.5.1804
     rm -rf $HOME/dcm2niix && \
     #
     # clean up
-    rm -rf /tmp/* /var/tmp/* $HOME/.cache/pip/ $HOME/Miniconda3-latest-Linux-x86_64.sh && \
+    rm -rf $HOME/.cache/pip/ $HOME/Miniconda3-latest-Linux-x86_64.sh && \
     conda clean -y --all && \
     #
     # change permission so a user is able to run tests
