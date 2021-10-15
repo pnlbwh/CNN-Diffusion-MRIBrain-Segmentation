@@ -10,7 +10,6 @@ dependencies:
     - cudatoolkit==9.0
     - cudnn==7.6.0
     - keras==2.2.4
-    - numpy==1.16.4
     - nibabel>=2.2.1
     - ants
     - pip
