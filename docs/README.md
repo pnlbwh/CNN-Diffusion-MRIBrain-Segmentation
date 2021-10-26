@@ -118,10 +118,10 @@ The NVIDIA graphics driver and CUDA compilier are already installed on machines 
 If you use bash, add the following lines to the bottom of your `~/.bashrc` file:
 
     # add cuda tools to command path
-    export PATH=/usr/local/cuda/bin:${PATH}
+    export PATH=/usr/local/cuda-9.1/bin:${PATH}
 
     # add the CUDA binary and library directory to your LD_LIBRARY_PATH
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-9.0/lib64
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-9.1/lib64
   
 Open a new terminal for the changes to take effect.
 
