@@ -10,11 +10,12 @@ dependencies:
     - cudatoolkit==9.0
     - cudnn==7.6.0
     - keras==2.2.4
-    - numpy==1.16.4
     - nibabel>=2.2.1
     - ants
     - pip
     - pip:
+        - ipython
+        - prompt-toolkit==2.0.1
         - gputil
         - scikit-image==0.16.2
         - git+https://github.com/pnlbwh/conversion.git

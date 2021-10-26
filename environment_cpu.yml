@@ -13,5 +13,7 @@ dependencies:
     - nibabel>=2.2.1
     - pip
     - pip:
+        - ipython
+        - prompt-toolkit==2.0.1
         - scikit-image==0.16.2
         - git+https://github.com/pnlbwh/conversion.git
