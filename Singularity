@@ -48,7 +48,7 @@ From: centos:7.5.1804
     cd dcm2niix && mkdir build && cd build && \
     cmake .. && make -j4 && \
     mv bin $HOME/dcmbin/ && \
-    rm -rf $HOME/dcm2niix && \
+    cd && rm -rf $HOME/dcm2niix && \
     #
     # clean up
     rm -rf $HOME/.cache/pip/ $HOME/Miniconda3-latest-Linux-x86_64.sh && \
