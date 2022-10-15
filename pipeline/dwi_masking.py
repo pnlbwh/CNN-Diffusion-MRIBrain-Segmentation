@@ -34,19 +34,21 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress tensor flow message
 # Set CUDA_DEVICE_ORDER so the IDs assigned by CUDA match those from nvidia-smi
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
-# Get the first available GPU
+# Look for GPUs
 try:
     import GPUtil
     DEVICE_ID_LIST = GPUtil.getFirstAvailable()
-    DEVICE_ID = DEVICE_ID_LIST[0] # Grab first element from list
-    print ("GPU found...", DEVICE_ID)
-
-    # Set CUDA_VISIBLE_DEVICES to mask out all other GPUs than the first available device id
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_ID)
+    # Use the first available GPU
+    DEVICE_ID = DEVICE_ID_LIST[0]
+    
+    if not os.environ["CUDA_VISIBLE_DEVICES"]:
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_ID)
+        
+    print ("Using GPU #", DEVICE_ID)    
 
 except:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-    print("GPU not available...")
+    print("GPU not available")
 
 import warnings
 with warnings.catch_warnings():
