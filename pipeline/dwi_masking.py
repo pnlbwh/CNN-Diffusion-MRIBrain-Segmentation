@@ -44,7 +44,7 @@ try:
     if not os.environ["CUDA_VISIBLE_DEVICES"]:
         os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_ID)
         
-    print ("Using GPU #", DEVICE_ID)    
+    print ("Using GPU #", os.environ["CUDA_VISIBLE_DEVICES"])
 
 except:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
