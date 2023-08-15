@@ -37,16 +37,32 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 # Get the first available GPU
 try:
     import GPUtil
-    DEVICE_ID_LIST = GPUtil.getFirstAvailable()
-    DEVICE_ID = DEVICE_ID_LIST[0] # Grab first element from list
-    print ("GPU found...", DEVICE_ID)
+    DEVICE_ID_LIST = [g.id for g in GPUtil.getGPUs()]
+    DEVICE_ID = DEVICE_ID_LIST[0]
+    
+    
+    CUDA_VISIBLE_DEVICES=os.getenv('CUDA_VISIBLE_DEVICES')
+    if CUDA_VISIBLE_DEVICES:
+        # prioritize external definition
+        if int(CUDA_VISIBLE_DEVICES) in DEVICE_ID_LIST:
+            pass
+        else:
+            # define it internally
+            CUDA_VISIBLE_DEVICES=DEVICE_ID
+    else:
+        # define it internally
+        CUDA_VISIBLE_DEVICES=DEVICE_ID
+    
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(CUDA_VISIBLE_DEVICES)
+    # setting of CUDA_VISIBLE_DEVICES also masks out all other GPUs
+    
+    print ("Use GPU device #", CUDA_VISIBLE_DEVICES)
 
-    # Set CUDA_VISIBLE_DEVICES to mask out all other GPUs than the first available device id
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_ID)
 
 except:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     print("GPU not available...")
+
 
 import warnings
 with warnings.catch_warnings():
