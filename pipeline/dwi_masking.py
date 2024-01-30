@@ -68,33 +68,31 @@ import warnings
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
     import tensorflow as tf
+    tf.logging.set_verbosity(tf.logging.ERROR)
+
+    # COnfigure for GPU usage
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    config.log_device_placement = False
+    sess = tf.Session(config=config)
+    from keras import backend as K
+    K.set_session(sess)
+
+
 
 import multiprocessing as mp
-import re
 import sys
 from glob import glob
 import subprocess
-import argparse, textwrap
+import argparse
 import datetime
 import pathlib
 import nibabel as nib
 import numpy as np
-from keras.models import load_model
 from keras.models import model_from_json
-from multiprocessing import Process, Manager, Value, Pool
-from time import sleep
-import keras
-from keras import losses
-from keras.models import Model
-from keras.layers import Input, merge, concatenate, Conv2D, MaxPooling2D, \
-    Activation, UpSampling2D, Dropout, Conv2DTranspose, add, multiply
-from keras.layers.normalization import BatchNormalization as bn
-from keras.callbacks import ModelCheckpoint, TensorBoard
-from keras.optimizers import RMSprop
-from keras import regularizers
+from multiprocessing import Manager
 from keras import backend as K
 from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint
 
 # suffixes
 SUFFIX_NIFTI = "nii"
@@ -459,7 +457,6 @@ def list_masks(mask_list, view='default'):
 def pre_process(input_file, target_list, b0_threshold=50.):
 
     from conversion import nifti_write, read_bvals
-    from subprocess import Popen
 
     if path.isfile(input_file):
 
