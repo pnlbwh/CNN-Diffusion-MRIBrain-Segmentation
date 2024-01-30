@@ -623,51 +623,34 @@ or MRtrix3 maskfilter (mrtrix)''')
             """
             with Manager() as manager:
                 target_list = manager.list()
-                omat_list = []                
-                jobs = []
-                for i in range(0,len(case_arr)):
-                    p_process = mp.Process(target=pre_process, args=(case_arr[i],
-                                                             target_list))
-                    p_process.start()
-                    jobs.append(p_process)
-        
-                for process in jobs:
-                    process.join()
+                with mp.Pool(processes=args.cr) as pool:
+                    for case in case_arr:
+                        pool.apply_async(pre_process, (case, target_list))
+                    pool.close()
+                    pool.join()
 
                 target_list = list(target_list)
-            """
-            Enable Multi core Processing for ANTS Registration
-            manager provide a way to create data which can be shared between different processes
-            """
-            with Manager() as manager:
-                result = manager.list()              
-                ants_jobs = []
-                for i in range(0, len(target_list)):
-                    p_ants = mp.Process(target=ANTS_rigid_body_trans, args=(target_list[i],
-                                                             result, reference))
-                    ants_jobs.append(p_ants)
-                    p_ants.start()
-        
-                for process in ants_jobs:
-                    process.join()
+
+                """
+                Enable Multi core Processing for ANTS Registration
+                manager provide a way to create data which can be shared between different processes
+                """
+                result = manager.list()
+
+                with mp.Pool(processes=args.cr) as pool:
+                    for target in target_list:
+                        pool.apply_async(ANTS_rigid_body_trans, (target, result, reference))
+                    pool.close()
+                    pool.join()
 
                 result = list(result)
+                data_n = manager.list()
 
-            for subject_ANTS in result:
-                transformed_cases.append(subject_ANTS[0])
-                omat_list.append(subject_ANTS[1])
-
-            with Manager() as manager:
-                data_n = manager.list() 
-                norm_jobs = []             
-                for i in range(0, len(target_list)):
-                    p_norm = mp.Process(target=normalize, args=(transformed_cases[i],
-                                                             args.percentile, data_n))
-                    norm_jobs.append(p_norm)
-                    p_norm.start()
-        
-                for process in norm_jobs:
-                    process.join()
+                with mp.Pool(processes=args.cr) as pool:
+                    for transformed_case, _ in result:
+                        pool.apply_async(normalize, (transformed_case, args.percentile, data_n))
+                    pool.close()
+                    pool.join()
 
                 data_n = list(data_n)
 
@@ -682,9 +665,9 @@ or MRtrix3 maskfilter (mrtrix)''')
                 imgU16_sagittal.tofile(f_handle_s)
                 imgU16_coronal.tofile(f_handle_c)
                 imgU16_axial.tofile(f_handle_a)
-
-                print ("Case completed = ", count)
                 count += 1
+                print ("Case completed = ", count)
+
 
             f_handle_s.close()
             f_handle_c.close()
