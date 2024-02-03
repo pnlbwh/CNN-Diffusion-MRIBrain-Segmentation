@@ -2,3 +2,4 @@
 .idea
 __pycache__/
 model_folder/
+!/bashrc3-gpu-cuda-10.2.sh
