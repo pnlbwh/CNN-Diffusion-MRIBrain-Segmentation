@@ -1,4 +1,4 @@
-name: cnn_masking
+name: dmri_seg
 
 channels:
     - conda-forge
@@ -8,7 +8,7 @@ dependencies:
     - python==3.6
     - tensorflow-gpu==1.12.0
     - cudatoolkit==9.0
-    - cudnn==7.6
+    - cudnn==7.6.0
     - keras==2.2.4
     - nibabel>=2.2.1
     - ants
