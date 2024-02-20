@@ -3,9 +3,10 @@
 from __future__ import division
 
 # -----------------------------------------------------------------
-# Author:       Senthil Palanivelu, Tashrif Billah                 
-# Written:      01/22/2020                             
-# Last Updated:     02/28/2020
+# Author:           Senthil Palanivelu, Tashrif Billah
+# Written:          01/22/2020
+# Updatad by:       Ryan Zurrin
+# Last Updated:     02/20/2024
 # Purpose:          Pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -33,6 +34,12 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress tensor flow message
 
 # Set CUDA_DEVICE_ORDER so the IDs assigned by CUDA match those from nvidia-smi
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+
+# Use pure python implementation of protocol buffers
+# check if protobuf is later then 3.20.0 and if so, set the environment variable
+import pkg_resources
+if pkg_resources.get_distribution("protobuf").version >= "3.20.0":
+    os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 # Get the first available GPU
 try:
@@ -66,15 +73,25 @@ import warnings
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
     import tensorflow as tf
-    tf.logging.set_verbosity(tf.logging.ERROR)
+
+    # check version of tf and if 1.12 or less use tf.logging.set_verbosity(tf.logging.ERROR)
+    if int(tf.__version__.split('.')[0]) <= 1 and int(tf.__version__.split('.')[1]) <= 12:
+        tf.logging.set_verbosity(tf.logging.ERROR)
+    else:
+        tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
     # Configure for dynamic GPU memory usage
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     config.log_device_placement = False
     sess = tf.Session(config=config)
-    from keras import backend as K
-    K.set_session(sess)
+    # from keras import backend as K
+    try:
+        from keras import backend as K
+        K.set_session(sess)
+    except ImportError:
+        from tensorflow.keras import backend as K
+        K.set_session(sess)
 
 import multiprocessing as mp
 import sys
@@ -85,10 +102,17 @@ import datetime
 import pathlib
 import nibabel as nib
 import numpy as np
-from keras.models import model_from_json
 from multiprocessing import Manager
-from keras import backend as K
-from keras.optimizers import Adam
+
+# Check for keras package and if so use keras.* pacakes otherwise use tensorflow.keras.*
+try:
+    from keras.models import model_from_json
+    from keras import backend as K
+    from keras.optimizers import Adam
+except ImportError:
+    from tensorflow.keras.models import model_from_json
+    from tensorflow.keras import backend as K
+    from tensorflow.keras.optimizers import Adam
 
 # suffixes
 SUFFIX_NIFTI = "nii"
@@ -220,7 +244,8 @@ def normalize(b0_resampled, percentile, data_n):
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-normalized.nii.gz'
     output_file = path.join(path.dirname(input_file), output_name)
     img = nib.load(b0_resampled)
-    imgU16 = img.get_data().astype(np.float32)
+    # imgU16 = img.get_data().astype(np.float32)
+    imgU16 = img.get_fdata().astype(np.float32)
     p = np.percentile(imgU16, percentile)
     data = imgU16 / p
     data[data > 1] = 1
@@ -319,7 +344,8 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
         print(output_mask_filtered)
         img = nib.load(output_mask_filtered)
         data_dwi = nib.load(sub_name[i])
-        imgU16 = img.get_data().astype(np.uint8)
+        # imgU16 = img.get_data().astype(np.uint8)
+        imgU16 = img.get_fdata().astype(np.uint8)
 
         brain_mask_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
         brain_mask_final = path.join(output_dir, brain_mask_file)
@@ -464,7 +490,8 @@ def pre_process(input_file, target_list, b0_threshold=50.):
             print("Extracting b0 volume...")
             bvals = np.array(read_bvals(input_file.split('.nii')[0] + '.bval'))
             where_b0 = np.where(bvals <= b0_threshold)[0]
-            b0 = dwi.get_data()[..., where_b0].mean(-1)
+            # b0 = dwi.get_data()[..., where_b0].mean(-1)
+            b0 = dwi.get_fdata()[..., where_b0].mean(-1)
         else:
             print("Loading b0 volume...")
             b0 = dwi.get_fdata()
@@ -644,7 +671,8 @@ or MRtrix3 maskfilter (mrtrix)''')
             count = 0
             for b0_nifti in data_n:
                 img = nib.load(b0_nifti)
-                imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
+                # imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
+                imgU16_sagittal = img.get_fdata().astype(np.float32)  # sagittal view
                 imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
                 imgU16_axial = np.swapaxes(imgU16_sagittal, 0, 2)  # Axial view
 
