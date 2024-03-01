@@ -1,0 +1,15 @@
+name: tf2.10X
+channels:
+  - defaults
+  - conda-forge
+  - anaconda
+dependencies:
+  - python=3.9
+  - cudnn
+  - nibabel
+  - gputil
+  - ants
+  - pip
+  - pip:
+    - tensorflow==2.10.0
+    - git+https://github.com/pnlbwh/conversion.git
