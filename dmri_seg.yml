@@ -1,6 +1,5 @@
-name: tf2.10X
+name: dmri_seg
 channels:
-  - defaults
   - conda-forge
   - anaconda
 dependencies:
