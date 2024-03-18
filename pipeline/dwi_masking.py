@@ -678,9 +678,12 @@ or MRtrix3 maskfilter (mrtrix)''')
             count = 0
             for b0_nifti in data_n:
                 img = nib.load(b0_nifti)
-                imgU16_sagittal = img.get_fdata().astype(np.float32)  # sagittal view
-                imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
-                imgU16_axial = np.swapaxes(imgU16_sagittal, 0, 2)  # Axial view
+                # sagittal view
+                imgU16_sagittal = img.get_fdata().astype(np.float32)
+                # coronal view
+                imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)
+                # axial view
+                imgU16_axial = np.swapaxes(imgU16_sagittal, 0, 2)
 
                 imgU16_sagittal.tofile(f_handle_s)
                 imgU16_coronal.tofile(f_handle_c)
