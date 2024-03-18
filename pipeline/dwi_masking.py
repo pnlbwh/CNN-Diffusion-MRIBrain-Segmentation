@@ -3,9 +3,8 @@
 from __future__ import division
 
 # -----------------------------------------------------------------
-# Author:           Senthil Palanivelu, Tashrif Billah
+# Author:           Senthil Palanivelu, Tashrif Billah, Ryan Zurrin
 # Written:          01/22/2020
-# Updatad by:       Ryan Zurrin
 # Last Updated:     03/1/2024
 # Purpose:          Pipeline for diffusion brain masking
 # -----------------------------------------------------------------
@@ -30,13 +29,11 @@ import os
 from os import path
 import webbrowser
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress tensor flow message
+# Suppress tensor flow message
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # Set CUDA_DEVICE_ORDER so the IDs assigned by CUDA match those from nvidia-smi
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-
-# set TF_XLA_FLAGS to enable XLA
-# os.environ['TF_XLA_FLAGS'] = '--tf_xla_auto_jit=2 --tf_xla_cpu_global_jit'
 
 # Use pure python implementation of protocol buffers
 # check if protobuf is later then 3.20.0 and if so, set the environment variable
@@ -262,7 +259,6 @@ def normalize(b0_resampled, percentile, data_n):
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-normalized.nii.gz'
     output_file = path.join(path.dirname(input_file), output_name)
     img = nib.load(b0_resampled)
-    # imgU16 = img.get_data().astype(np.float32)
     imgU16 = img.get_fdata().astype(np.float32)
     p = np.percentile(imgU16, percentile)
     data = imgU16 / p
@@ -362,7 +358,6 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
         print(output_mask_filtered)
         img = nib.load(output_mask_filtered)
         data_dwi = nib.load(sub_name[i])
-        # imgU16 = img.get_data().astype(np.uint8)
         imgU16 = img.get_fdata().astype(np.uint8)
 
         brain_mask_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
@@ -453,9 +448,6 @@ def ANTS_rigid_body_trans(b0_nii, result, reference=None):
 
 
 def ANTS_inverse_transform(predicted_mask, reference, omat='default'):
-    # print "Mask file = ", predicted_mask
-    # print "Reference = ", reference
-    # print "omat = ", omat
 
     print("Performing ants inverse transform...")
     input_file = predicted_mask
@@ -508,7 +500,6 @@ def pre_process(input_file, target_list, b0_threshold=50.):
             print("Extracting b0 volume...")
             bvals = np.array(read_bvals(input_file.split('.nii')[0] + '.bval'))
             where_b0 = np.where(bvals <= b0_threshold)[0]
-            # b0 = dwi.get_data()[..., where_b0].mean(-1)
             b0 = dwi.get_fdata()[..., where_b0].mean(-1)
         else:
             print("Loading b0 volume...")
@@ -629,9 +620,7 @@ or MRtrix3 maskfilter (mrtrix)''')
                 case_arr = f.read().splitlines()
 
             TXT_file = path.basename(filename)
-            # print(TXT_file)
             unique = TXT_file[:len(TXT_file) - (len(SUFFIX_TXT) + 1)]
-            # print(unique)
             storage = path.dirname(case_arr[0])
             tmp_path = storage + '/'
             trained_model_folder = args.model_folder.rstrip('/')
@@ -689,7 +678,6 @@ or MRtrix3 maskfilter (mrtrix)''')
             count = 0
             for b0_nifti in data_n:
                 img = nib.load(b0_nifti)
-                # imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
                 imgU16_sagittal = img.get_fdata().astype(np.float32)  # sagittal view
                 imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
                 imgU16_axial = np.swapaxes(imgU16_sagittal, 0, 2)  # Axial view
