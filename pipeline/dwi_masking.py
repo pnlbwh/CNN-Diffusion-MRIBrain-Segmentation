@@ -177,7 +177,7 @@ def predict_mask(input_file, trained_folder, view='default'):
     loaded_model.load_weights(optimal_model)
 
     # evaluate loaded model on test data
-    loaded_model.compile(optimizer=Adam(lr=1e-5),
+    loaded_model.compile(optimizer=Adam(learning_rate=1e-5),
                          loss={'final_op': dice_coef_loss,
                                'xfinal_op': neg_dice_coef_loss,
                                'res_1_final_op': 'mse'})
