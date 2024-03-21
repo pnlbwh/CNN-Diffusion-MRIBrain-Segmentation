@@ -11,4 +11,5 @@ dependencies:
   - pip
   - pip:
     - tensorflow==2.10.0
+    - scikit-image
     - git+https://github.com/pnlbwh/conversion.git
