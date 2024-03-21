@@ -79,7 +79,7 @@ def maskfilter(maskPath, scale, filtered_maskPath):
 
     mask= nib.load(maskPath)
 
-    filtered_mask= perform_morph(mask.get_data(), scale)
+    filtered_mask= perform_morph(mask.get_fdata(), scale)
 
     nib.Nifti1Image(filtered_mask, affine= mask.affine, header= mask.header).to_filename(filtered_maskPath)
 
