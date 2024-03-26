@@ -38,7 +38,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # Set CUDA_DEVICE_ORDER so the IDs assigned by CUDA match those from nvidia-smi
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
-
 # Get the first available GPU
 try:
     import GPUtil
@@ -67,20 +66,20 @@ except:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     print("GPU not available...")
 
-try:
-    from keras.models import model_from_json
-    from keras import backend as K
-    from keras.optimizers import Adam
-except ImportError:
-    from tensorflow.keras.models import model_from_json
-    from tensorflow.keras import backend as K
-    from tensorflow.keras.optimizers import Adam
 
 import warnings
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
     import tensorflow as tf
+    try:
+        from keras.models import model_from_json
+        from keras import backend as K
+        from keras.optimizers import Adam
+    except ImportError:
+        from tensorflow.keras.models import model_from_json
+        from tensorflow.keras import backend as K
+        from tensorflow.keras.optimizers import Adam
 
     # check version of tf and if 1.12 or less use tf.logging.set_verbosity(tf.logging.ERROR)
     if int(tf.__version__.split('.')[0]) <= 1 and int(tf.__version__.split('.')[1]) <= 12:
@@ -102,7 +101,6 @@ with warnings.catch_warnings():
             except RuntimeError as e:
                 # Memory growth must be set before GPUs have been initialized
                 print(e)
-
 
 # suffixes
 SUFFIX_NIFTI = "nii"
@@ -157,11 +155,17 @@ def predict_mask(input_file, trained_folder, view='default'):
     optimal_model = glob(trained_folder + '/weights-' + view + '-improvement-*.h5')[-1]
     loaded_model.load_weights(optimal_model)
 
-    # evaluate loaded model on test data
-    loaded_model.compile(optimizer=Adam(learning_rate=1e-5),
-                         loss={'final_op': dice_coef_loss,
-                               'xfinal_op': neg_dice_coef_loss,
-                               'res_1_final_op': 'mse'})
+    # check if tf2 or tf1, if tf 1 use lr instead of learning_rate
+    if int(tf.__version__.split('.')[0]) <= 1:
+        loaded_model.compile(optimizer=Adam(lr=1e-5),
+                             loss={'final_op': dice_coef_loss,
+                                   'xfinal_op': neg_dice_coef_loss,
+                                   'res_1_final_op': 'mse'})
+    else:
+        loaded_model.compile(optimizer=Adam(learning_rate=1e-5),
+                             loss={'final_op': dice_coef_loss,
+                                   'xfinal_op': neg_dice_coef_loss,
+                                   'res_1_final_op': 'mse'})
 
     case_name = path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-' + view + '-mask.npy'
