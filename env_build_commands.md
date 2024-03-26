@@ -7,7 +7,7 @@ pip install tensorflow==2.11
 conda install -c anaconda cudnn
 pip install nvidia-pyindex
 pip install nvidia-tensorrt
-conda install -c conda-forge nibabel gputil ants
+conda install -c conda-forge nibabel gputil
 pip install scikit-image>=0.16.2
 pip install git+https://github.com/pnlbwh/conversion.git
 
@@ -17,4 +17,10 @@ After build the environment you need to set the LD_LIBRARY_PATH to the lib of yo
 
 ```bash
 export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib/
+```
+
+Additionally you will need to source a compiled ANTs environment:
+
+```bash
+source /rfanfs/pnl-zorro/software/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/env.sh
 ```
