@@ -2,13 +2,6 @@
 
 from __future__ import division
 
-# -----------------------------------------------------------------
-# Author:           Senthil Palanivelu, Tashrif Billah, Ryan Zurrin
-# Written:          01/22/2020
-# Last Updated:     03/1/2024
-# Purpose:          Pipeline for diffusion brain masking
-# -----------------------------------------------------------------
-
 """
 pipeline.py
 ~~~~~~~~~~
@@ -28,6 +21,16 @@ pipeline.py
 import os
 from os import path
 import webbrowser
+import multiprocessing as mp
+import sys
+from glob import glob
+import subprocess
+import argparse
+import datetime
+import pathlib
+import nibabel as nib
+import numpy as np
+from multiprocessing import Manager
 
 # Suppress tensor flow message
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -35,12 +38,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # Set CUDA_DEVICE_ORDER so the IDs assigned by CUDA match those from nvidia-smi
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
-# Use pure python implementation of protocol buffers
-# check if protobuf is later then 3.20.0 and if so, set the environment variable
-import pkg_resources
-
-if pkg_resources.get_distribution("protobuf").version >= "3.20.0":
-    os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 # Get the first available GPU
 try:
@@ -70,6 +67,15 @@ except:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     print("GPU not available...")
 
+try:
+    from keras.models import model_from_json
+    from keras import backend as K
+    from keras.optimizers import Adam
+except ImportError:
+    from tensorflow.keras.models import model_from_json
+    from tensorflow.keras import backend as K
+    from tensorflow.keras.optimizers import Adam
+
 import warnings
 
 with warnings.catch_warnings():
@@ -84,10 +90,6 @@ with warnings.catch_warnings():
         config.gpu_options.allow_growth = True
         config.log_device_placement = False
         sess = tf.Session(config=config)
-        try:
-            from keras import backend as K
-        except ImportError:
-            from tensorflow.keras import backend as K
         K.set_session(sess)
     else:
         tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -101,27 +103,6 @@ with warnings.catch_warnings():
                 # Memory growth must be set before GPUs have been initialized
                 print(e)
 
-
-import multiprocessing as mp
-import sys
-from glob import glob
-import subprocess
-import argparse
-import datetime
-import pathlib
-import nibabel as nib
-import numpy as np
-from multiprocessing import Manager
-
-# Check for keras package and if so use keras.* pacakes otherwise use tensorflow.keras.*
-try:
-    from keras.models import model_from_json
-    from keras import backend as K
-    from keras.optimizers import Adam
-except ImportError:
-    from tensorflow.keras.models import model_from_json
-    from tensorflow.keras import backend as K
-    from tensorflow.keras.optimizers import Adam
 
 # suffixes
 SUFFIX_NIFTI = "nii"
