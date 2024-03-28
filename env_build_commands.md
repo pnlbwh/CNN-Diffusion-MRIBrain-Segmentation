@@ -1,13 +1,13 @@
 # Instructions for building the CNN_MASKING environment that works on modern GPUs
 
 ```bash
-conda create -n dmri_seg python=3.9
+conda create -y -n dmri_seg python=3.9
 conda activate dmri_seg
 pip install tensorflow==2.11
-conda install -c anaconda cudnn
+conda install -y -c anaconda cudnn
 pip install nvidia-pyindex
 pip install nvidia-tensorrt
-conda install -c conda-forge nibabel gputil
+conda install -y -c conda-forge nibabel gputil
 pip install scikit-image>=0.16.2
 pip install git+https://github.com/pnlbwh/conversion.git
 
