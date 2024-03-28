@@ -8,7 +8,7 @@ conda install -y -c anaconda cudnn
 pip install nvidia-pyindex
 pip install nvidia-tensorrt
 conda install -y -c conda-forge nibabel gputil
-pip install scikit-image>=0.16.2
+pip install scikit-image
 pip install git+https://github.com/pnlbwh/conversion.git
 
 ```
