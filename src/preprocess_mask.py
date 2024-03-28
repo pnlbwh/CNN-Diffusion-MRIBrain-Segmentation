@@ -11,7 +11,7 @@ def process_trainingdata(mask_arr):
     count = 0
     for b0_mask in mask_arr:
         img = nib.load(b0_mask)
-        imgU8_sagittal = img.get_data().astype(np.uint8) # sagittal view
+        imgU8_sagittal = img.get_fdata().astype(np.uint8) # sagittal view
         imgU8_sagittal[ imgU8_sagittal < 0 ] = 0        
         imgU8_sagittal[ imgU8_sagittal > 1 ] = 1        
         imgU8_coronal = np.swapaxes(imgU8_sagittal,0,1) # coronal view

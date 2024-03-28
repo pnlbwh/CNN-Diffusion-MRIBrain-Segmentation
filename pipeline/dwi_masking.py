@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import division
-# -----------------------------------------------------------------
-# Author:       Senthil Palanivelu, Tashrif Billah                 
-# Written:      01/22/2020                             
-# Last Updated:     02/28/2020
-# Purpose:          Pipeline for diffusion brain masking
-# -----------------------------------------------------------------
 
 """
 pipeline.py
@@ -23,13 +17,23 @@ pipeline.py
 10)  Cleaning
 """
 
-
 # pylint: disable=invalid-name
 import os
 from os import path
 import webbrowser
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress tensor flow message
+import multiprocessing as mp
+import sys
+from glob import glob
+import subprocess
+import argparse
+import datetime
+import pathlib
+import nibabel as nib
+import numpy as np
+from multiprocessing import Manager
 
+# Suppress tensor flow message
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # Set CUDA_DEVICE_ORDER so the IDs assigned by CUDA match those from nvidia-smi
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -37,27 +41,26 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 # Get the first available GPU
 try:
     import GPUtil
+
     DEVICE_ID_LIST = [g.id for g in GPUtil.getGPUs()]
     DEVICE_ID = DEVICE_ID_LIST[0]
-    
-    
-    CUDA_VISIBLE_DEVICES=os.getenv('CUDA_VISIBLE_DEVICES')
+
+    CUDA_VISIBLE_DEVICES = os.getenv('CUDA_VISIBLE_DEVICES')
     if CUDA_VISIBLE_DEVICES:
         # prioritize external definition
         if int(CUDA_VISIBLE_DEVICES) in DEVICE_ID_LIST:
             pass
         else:
             # define it internally
-            CUDA_VISIBLE_DEVICES=DEVICE_ID
+            CUDA_VISIBLE_DEVICES = DEVICE_ID
     else:
         # define it internally
-        CUDA_VISIBLE_DEVICES=DEVICE_ID
-    
+        CUDA_VISIBLE_DEVICES = DEVICE_ID
+
     os.environ["CUDA_VISIBLE_DEVICES"] = str(CUDA_VISIBLE_DEVICES)
     # setting of CUDA_VISIBLE_DEVICES also masks out all other GPUs
-    
-    print ("Use GPU device #", CUDA_VISIBLE_DEVICES)
 
+    print("Use GPU device #", CUDA_VISIBLE_DEVICES)
 
 except:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -65,36 +68,39 @@ except:
 
 
 import warnings
+
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
     import tensorflow as tf
+    try:
+        from keras.models import model_from_json
+        from keras import backend as K
+        from keras.optimizers import Adam
+    except ImportError:
+        from tensorflow.keras.models import model_from_json
+        from tensorflow.keras import backend as K
+        from tensorflow.keras.optimizers import Adam
 
-import multiprocessing as mp
-import re
-import sys
-from glob import glob
-import subprocess
-import argparse, textwrap
-import datetime
-import pathlib
-import nibabel as nib
-import numpy as np
-from keras.models import load_model
-from keras.models import model_from_json
-from multiprocessing import Process, Manager, Value, Pool
-from time import sleep
-import keras
-from keras import losses
-from keras.models import Model
-from keras.layers import Input, merge, concatenate, Conv2D, MaxPooling2D, \
-    Activation, UpSampling2D, Dropout, Conv2DTranspose, add, multiply
-from keras.layers.normalization import BatchNormalization as bn
-from keras.callbacks import ModelCheckpoint, TensorBoard
-from keras.optimizers import RMSprop
-from keras import regularizers
-from keras import backend as K
-from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint
+    # check version of tf and if 1.12 or less use tf.logging.set_verbosity(tf.logging.ERROR)
+    if int(tf.__version__.split('.')[0]) <= 1 and int(tf.__version__.split('.')[1]) <= 12:
+        tf.logging.set_verbosity(tf.logging.ERROR)
+        # Configure for dynamic GPU memory usage
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        config.log_device_placement = False
+        sess = tf.Session(config=config)
+        K.set_session(sess)
+    else:
+        tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+        gpus = tf.config.experimental.list_physical_devices('GPU')
+        if gpus:
+            try:
+                # Currently, memory growth needs to be the same across GPUs
+                for gpu in gpus:
+                    tf.config.experimental.set_memory_growth(gpu, True)
+            except RuntimeError as e:
+                # Memory growth must be set before GPUs have been initialized
+                print(e)
 
 # suffixes
 SUFFIX_NIFTI = "nii"
@@ -122,7 +128,7 @@ def predict_mask(input_file, trained_folder, view='default'):
                   returns the neural network predicted filename which is stored
                   in disk in 3d numpy array *.npy format
     """
-    print ("Loading " + view + " model from disk...")
+    print("Loading " + view + " model from disk...")
     smooth = 1.
 
     def dice_coef(y_true, y_pred):
@@ -144,16 +150,22 @@ def predict_mask(input_file, trained_folder, view='default'):
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = model_from_json(loaded_model_json)
-       
+
     # load weights into new model
-    optimal_model= glob(trained_folder + '/weights-' + view + '-improvement-*.h5')[-1]
+    optimal_model = glob(trained_folder + '/weights-' + view + '-improvement-*.h5')[-1]
     loaded_model.load_weights(optimal_model)
 
-    # evaluate loaded model on test data
-    loaded_model.compile(optimizer=Adam(lr=1e-5),
-                         loss={'final_op': dice_coef_loss,
-                               'xfinal_op': neg_dice_coef_loss,
-                               'res_1_final_op': 'mse'})
+    # check if tf2 or tf1, if tf 1 use lr instead of learning_rate
+    if int(tf.__version__.split('.')[0]) <= 1:
+        loaded_model.compile(optimizer=Adam(lr=1e-5),
+                             loss={'final_op': dice_coef_loss,
+                                   'xfinal_op': neg_dice_coef_loss,
+                                   'res_1_final_op': 'mse'})
+    else:
+        loaded_model.compile(optimizer=Adam(learning_rate=1e-5),
+                             loss={'final_op': dice_coef_loss,
+                                   'xfinal_op': neg_dice_coef_loss,
+                                   'res_1_final_op': 'mse'})
 
     case_name = path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-' + view + '-mask.npy'
@@ -169,7 +181,6 @@ def predict_mask(input_file, trained_folder, view='default'):
 
 
 def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
-    
     x = np.load(sagittal_SO)
     y = np.load(coronal_SO)
     z = np.load(axial_SO)
@@ -220,14 +231,14 @@ def normalize(b0_resampled, percentile, data_n):
     output_file : str
                   Normalized by 99th percentile filename which is stored in disk
     """
-    print ("Normalizing input data")
+    print("Normalizing input data")
 
     input_file = b0_resampled
     case_name = path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-normalized.nii.gz'
     output_file = path.join(path.dirname(input_file), output_name)
     img = nib.load(b0_resampled)
-    imgU16 = img.get_data().astype(np.float32)
+    imgU16 = img.get_fdata().astype(np.float32)
     p = np.percentile(imgU16, percentile)
     data = imgU16 / p
     data[data > 1] = 1
@@ -238,7 +249,6 @@ def normalize(b0_resampled, percentile, data_n):
 
 
 def save_nifti(fname, data, affine=None, hdr=None):
-   
     hdr.set_data_dtype('int16')
     result_img = nib.Nifti1Image(data, affine, header=hdr)
     result_img.to_filename(fname)
@@ -311,24 +321,23 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
 
         if args.filter:
             print('Cleaning up ', CNN_output_file)
-            
-            if args.filter=='mrtrix':
+
+            if args.filter == 'mrtrix':
                 mask_filter = "maskfilter -force " + CNN_output_file + " -scale 2 clean " + output_mask_filtered
 
-            elif args.filter=='scipy':
-                mask_filter = path.join(path.dirname(__file__),'../src/maskfilter.py') + f' {CNN_output_file} 2 {output_mask_filtered}'
-        
+            elif args.filter == 'scipy':
+                mask_filter = path.join(path.dirname(__file__), '../src/maskfilter.py') + f' {CNN_output_file} 2 {output_mask_filtered}'
+
             process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
 
         else:
-            output_mask_filtered= CNN_output_file
-
+            output_mask_filtered = CNN_output_file
 
         print(output_mask_filtered)
         img = nib.load(output_mask_filtered)
         data_dwi = nib.load(sub_name[i])
-        imgU16 = img.get_data().astype(np.uint8)
+        imgU16 = img.get_fdata().astype(np.uint8)
 
         brain_mask_file = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
         brain_mask_final = path.join(output_dir, brain_mask_file)
@@ -340,7 +349,7 @@ def npy_to_nifti(b0_normalized_cases, cases_mask_arr, sub_name, view='default', 
 
 
 def clear(directory):
-    print ("Cleaning files ...")
+    print("Cleaning files ...")
 
     bin_a = 'cases_' + str(os.getpid()) + '_binary_a'
     bin_s = 'cases_' + str(os.getpid()) + '_binary_s'
@@ -352,11 +361,11 @@ def clear(directory):
                 filename.endswith('-thresholded.nii.gz') | filename.endswith('-inverse.mat') | \
                 filename.endswith('-Warped.nii.gz') | filename.endswith('-0GenericAffine.mat') | \
                 filename.endswith('_affinedMask.nii.gz') | filename.endswith('_originalMask.nii.gz') | \
-                filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz') |  \
+                filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz') | \
                 filename.endswith('-InverseWarped.nii.gz') | filename.endswith('-FilteredMask.nii.gz') | \
                 filename.endswith(bin_a) | filename.endswith(bin_c) | filename.endswith(bin_s) | \
                 filename.endswith('_FilteredMask.nii.gz') | filename.endswith('-normalized.nii.gz') | filename.endswith('-filled.nii.gz'):
-                os.unlink(directory + '/' + filename)
+            os.unlink(directory + '/' + filename)
 
 
 def split(cases_file, case_arr, view='default'):
@@ -375,7 +384,6 @@ def split(cases_file, case_arr, view='default'):
                    Contains the predicted mask filename of all the cases which is stored in disk in *.npy format
     """
 
-
     count = 0
     start = 0
     end = start + 256
@@ -390,7 +398,7 @@ def split(cases_file, case_arr, view='default'):
         elif view == 'axial':
             casex = np.swapaxes(casex, 0, 2)
         input_file = str(case_arr[i])
-        output_file = input_file[:len(input_file) - (len(SUFFIX_NHDR) + 1)] + '-' + view +'_SO.npy'
+        output_file = input_file[:len(input_file) - (len(SUFFIX_NHDR) + 1)] + '-' + view + '_SO.npy'
         predict_mask.append(output_file)
         np.save(output_file, casex)
         start = end
@@ -400,7 +408,6 @@ def split(cases_file, case_arr, view='default'):
 
 
 def ANTS_rigid_body_trans(b0_nii, result, reference=None):
-
     print("Performing ants rigid body transformation...")
     input_file = b0_nii
     case_name = path.basename(input_file)
@@ -421,10 +428,6 @@ def ANTS_rigid_body_trans(b0_nii, result, reference=None):
 
 def ANTS_inverse_transform(predicted_mask, reference, omat='default'):
 
-    #print "Mask file = ", predicted_mask
-    #print "Reference = ", reference
-    #print "omat = ", omat
-
     print("Performing ants inverse transform...")
     input_file = predicted_mask
     case_name = path.basename(input_file)
@@ -433,7 +436,7 @@ def ANTS_inverse_transform(predicted_mask, reference, omat='default'):
 
     # reference is the original b0 volume
     apply_inverse_trans = "antsApplyTransforms -d 3 -i " + predicted_mask + " -r " + reference + " -o " \
-                            + output_file + " --transform [" + omat + ",1]"
+                          + output_file + " --transform [" + omat + ",1]"
 
     output2 = subprocess.check_output(apply_inverse_trans, shell=True)
     return output_file
@@ -441,7 +444,7 @@ def ANTS_inverse_transform(predicted_mask, reference, omat='default'):
 
 def str2bool(v):
     if isinstance(v, bool):
-       return v
+        return v
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
@@ -451,41 +454,38 @@ def str2bool(v):
 
 
 def list_masks(mask_list, view='default'):
-
     for i in range(0, len(mask_list)):
-        print (view + " Mask file = ", mask_list[i])
+        print(view + " Mask file = ", mask_list[i])
 
 
 def pre_process(input_file, target_list, b0_threshold=50.):
-
     from conversion import nifti_write, read_bvals
-    from subprocess import Popen
 
     if path.isfile(input_file):
 
         # convert NRRD/NHDR to NIFIT as the first step
         # extract bse.py from just NIFTI later
         if input_file.endswith(SUFFIX_NRRD) | input_file.endswith(SUFFIX_NHDR):
-            inPrefix= input_file.split('.')[0]
+            inPrefix = input_file.split('.')[0]
             nifti_write(input_file)
-            input_file= inPrefix+ '.nii.gz'
+            input_file = inPrefix + '.nii.gz'
 
-        inPrefix= input_file.split('.nii')[0]
-        b0_nii= path.join(inPrefix+ '_bse.nii.gz')
-        
-        dwi= nib.load(input_file)
+        inPrefix = input_file.split('.nii')[0]
+        b0_nii = path.join(inPrefix + '_bse.nii.gz')
 
-        if len(dwi.shape)>3:
+        dwi = nib.load(input_file)
+
+        if len(dwi.shape) > 3:
             print("Extracting b0 volume...")
-            bvals= np.array(read_bvals(input_file.split('.nii')[0]+ '.bval'))
-            where_b0= np.where(bvals <= b0_threshold)[0]
-            b0= dwi.get_data()[...,where_b0].mean(-1)
+            bvals = np.array(read_bvals(input_file.split('.nii')[0] + '.bval'))
+            where_b0 = np.where(bvals <= b0_threshold)[0]
+            b0 = dwi.get_fdata()[..., where_b0].mean(-1)
         else:
             print("Loading b0 volume...")
-            b0= dwi.get_fdata()
+            b0 = dwi.get_fdata()
 
-        np.nan_to_num(b0).clip(min= 0., out= b0)
-        nib.Nifti1Image(b0, affine= dwi.affine, header= dwi.header).to_filename(b0_nii)
+        np.nan_to_num(b0).clip(min=0., out=b0)
+        nib.Nifti1Image(b0, affine=dwi.affine, header=dwi.header).to_filename(b0_nii)
 
         target_list.append((b0_nii))
 
@@ -523,19 +523,19 @@ def quality_control(mask_list, target_list, tmp_path, view='default'):
     dir_bak = os.getcwd()
     os.chdir(tmp_path)
 
-    process= subprocess.Popen(final, shell=True)
+    process = subprocess.Popen(final, shell=True)
     process.wait()
     os.chdir(dir_bak)
 
     mask_folder = os.path.join(tmp_path, 'slicesdir')
     mask_newfolder = os.path.join(tmp_path, 'slicesdir_' + view)
     if os.path.exists(mask_newfolder):
-        process = subprocess.Popen('rm -rf '+ mask_newfolder, shell=True)
+        process = subprocess.Popen('rm -rf ' + mask_newfolder, shell=True)
         process.wait()
 
     process = subprocess.Popen('mv ' + mask_folder + " " + mask_newfolder, shell=True)
     process.wait()
-    
+
 
 if __name__ == '__main__':
 
@@ -569,8 +569,8 @@ if __name__ == '__main__':
 intensity value to be used as a threshold for normalizing a b0 image to [0,1]''')
 
     parser.add_argument('-nproc', type=int, dest='cr', default=8, help='number of processes to use')
-    
-    parser.add_argument('-filter', choices=['scipy','mrtrix'], help='''perform morphological operation on the 
+
+    parser.add_argument('-filter', choices=['scipy', 'mrtrix'], help='''perform morphological operation on the 
 CNN generated mask to clean up holes and islands, can be done through a provided script (scipy) 
 or MRtrix3 maskfilter (mrtrix)''')
 
@@ -587,10 +587,10 @@ or MRtrix3 maskfilter (mrtrix)''')
     if args.dwi:
         f = pathlib.Path(args.dwi)
         if f.exists():
-            print ("File exist")
+            print("File exist")
             filename = args.dwi
         else:
-            print ("File not found")
+            print("File not found")
             sys.exit(1)
 
         # Input caselist.txt
@@ -598,11 +598,8 @@ or MRtrix3 maskfilter (mrtrix)''')
             with open(filename) as f:
                 case_arr = f.read().splitlines()
 
-
             TXT_file = path.basename(filename)
-            #print(TXT_file)
-            unique = TXT_file[:len(TXT_file) - (len(SUFFIX_TXT)+1)]
-            #print(unique)
+            unique = TXT_file[:len(TXT_file) - (len(SUFFIX_TXT) + 1)]
             storage = path.dirname(case_arr[0])
             tmp_path = storage + '/'
             trained_model_folder = args.model_folder.rstrip('/')
@@ -626,77 +623,61 @@ or MRtrix3 maskfilter (mrtrix)''')
             """
             with Manager() as manager:
                 target_list = manager.list()
-                omat_list = []                
-                jobs = []
-                for i in range(0,len(case_arr)):
-                    p_process = mp.Process(target=pre_process, args=(case_arr[i],
-                                                             target_list))
-                    p_process.start()
-                    jobs.append(p_process)
-        
-                for process in jobs:
-                    process.join()
+                with mp.Pool(processes=args.cr) as pool:
+                    for case in case_arr:
+                        pool.apply_async(pre_process, (case, target_list))
+                    pool.close()
+                    pool.join()
 
                 target_list = list(target_list)
-            """
-            Enable Multi core Processing for ANTS Registration
-            manager provide a way to create data which can be shared between different processes
-            """
-            with Manager() as manager:
-                result = manager.list()              
-                ants_jobs = []
-                for i in range(0, len(target_list)):
-                    p_ants = mp.Process(target=ANTS_rigid_body_trans, args=(target_list[i],
-                                                             result, reference))
-                    ants_jobs.append(p_ants)
-                    p_ants.start()
-        
-                for process in ants_jobs:
-                    process.join()
+
+                """
+                Enable Multi core Processing for ANTS Registration
+                manager provide a way to create data which can be shared between different processes
+                """
+                result = manager.list()
+
+                with mp.Pool(processes=args.cr) as pool:
+                    for target in target_list:
+                        pool.apply_async(ANTS_rigid_body_trans, (target, result, reference))
+                    pool.close()
+                    pool.join()
 
                 result = list(result)
+                data_n = manager.list()
 
-            for subject_ANTS in result:
-                transformed_cases.append(subject_ANTS[0])
-                omat_list.append(subject_ANTS[1])
-
-            with Manager() as manager:
-                data_n = manager.list() 
-                norm_jobs = []             
-                for i in range(0, len(target_list)):
-                    p_norm = mp.Process(target=normalize, args=(transformed_cases[i],
-                                                             args.percentile, data_n))
-                    norm_jobs.append(p_norm)
-                    p_norm.start()
-        
-                for process in norm_jobs:
-                    process.join()
+                with mp.Pool(processes=args.cr) as pool:
+                    for transformed_case, _ in result:
+                        pool.apply_async(normalize, (transformed_case, args.percentile, data_n))
+                    pool.close()
+                    pool.join()
 
                 data_n = list(data_n)
 
-            
             count = 0
             for b0_nifti in data_n:
                 img = nib.load(b0_nifti)
-                imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
-                imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
-                imgU16_axial = np.swapaxes(imgU16_sagittal, 0, 2)    # Axial view
+                # sagittal view
+                imgU16_sagittal = img.get_fdata().astype(np.float32)
+                # coronal view
+                imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)
+                # axial view
+                imgU16_axial = np.swapaxes(imgU16_sagittal, 0, 2)
 
                 imgU16_sagittal.tofile(f_handle_s)
                 imgU16_coronal.tofile(f_handle_c)
                 imgU16_axial.tofile(f_handle_a)
-
-                print ("Case completed = ", count)
                 count += 1
+                print("Case completed = ", count)
 
             f_handle_s.close()
             f_handle_c.close()
             f_handle_a.close()
 
-            print ("Merging npy files...")
-            cases_file_s = storage + '/'+ unique + '_' + str(os.getpid()) + '-casefile-sagittal.npy'
-            cases_file_c = storage + '/'+ unique + '_' + str(os.getpid()) + '-casefile-coronal.npy'
-            cases_file_a = storage + '/'+ unique + '_' + str(os.getpid()) + '-casefile-axial.npy'
+            print("Merging npy files...")
+            cases_file_s = storage + '/' + unique + '_' + str(os.getpid()) + '-casefile-sagittal.npy'
+            cases_file_c = storage + '/' + unique + '_' + str(os.getpid()) + '-casefile-coronal.npy'
+            cases_file_a = storage + '/' + unique + '_' + str(os.getpid()) + '-casefile-axial.npy'
 
             merged_dwi_list = []
             merged_dwi_list.append(cases_file_s)
@@ -707,7 +688,7 @@ or MRtrix3 maskfilter (mrtrix)''')
             merge_c = np.memmap(binary_file_c, dtype=np.float32, mode='r+', shape=(256 * len(target_list), y_dim, z_dim))
             merge_a = np.memmap(binary_file_a, dtype=np.float32, mode='r+', shape=(256 * len(target_list), y_dim, z_dim))
 
-            print ("Saving data to disk...")
+            print("Saving data to disk...")
             np.save(cases_file_s, merge_s)
             np.save(cases_file_c, merge_c)
             np.save(cases_file_a, merge_a)
@@ -725,14 +706,14 @@ or MRtrix3 maskfilter (mrtrix)''')
             remove_string(registered_file, target_file, "-Warped")
 
             with open(target_file) as f:
-                newText=f.read().replace('.nii.gz', '-0GenericAffine.mat')
+                newText = f.read().replace('.nii.gz', '-0GenericAffine.mat')
 
             with open(mat_file, "w") as f:
                 f.write(newText)
 
             end_preprocessing_time = datetime.datetime.now()
             total_preprocessing_time = end_preprocessing_time - start_total_time
-            print ("Pre-Processing Time Taken : ", round(int(total_preprocessing_time.seconds)/60, 2), " min")
+            print("Pre-Processing Time Taken : ", round(int(total_preprocessing_time.seconds) / 60, 2), " min")
 
             # DWI Deep Learning Segmentation
             dwi_mask_sagittal = predict_mask(cases_file_s, trained_model_folder, view='sagittal')
@@ -741,7 +722,7 @@ or MRtrix3 maskfilter (mrtrix)''')
 
             end_masking_time = datetime.datetime.now()
             total_masking_time = end_masking_time - start_total_time - total_preprocessing_time
-            print ("Masking Time Taken : ", round(int(total_masking_time.seconds)/60, 2), " min")
+            print("Masking Time Taken : ", round(int(total_masking_time.seconds) / 60, 2), " min")
 
             transformed_file = registered_file
             omat_file = mat_file
@@ -751,35 +732,32 @@ or MRtrix3 maskfilter (mrtrix)''')
             omat_list = [line.rstrip('\n') for line in open(omat_file)]
 
             # Post Processing
-            print ("Splitting files....")
+            print("Splitting files....")
             cases_mask_sagittal = split(dwi_mask_sagittal, target_list, view='sagittal')
             cases_mask_coronal = split(dwi_mask_coronal, target_list, view='coronal')
             cases_mask_axial = split(dwi_mask_axial, target_list, view='axial')
 
             multi_mask = []
             for i in range(0, len(cases_mask_sagittal)):
-
                 sagittal_SO = cases_mask_sagittal[i]
                 coronal_SO = cases_mask_coronal[i]
                 axial_SO = cases_mask_axial[i]
 
                 input_file = target_list[i]
 
-                multi_view_mask = multi_view_fast(sagittal_SO, 
-                                                  coronal_SO, 
-                                                  axial_SO, 
+                multi_view_mask = multi_view_fast(sagittal_SO,
+                                                  coronal_SO,
+                                                  axial_SO,
                                                   input_file)
 
-
-                brain_mask_multi = npy_to_nifti(list(transformed_cases[i].split()), 
-                                                list(multi_view_mask.split()), 
+                brain_mask_multi = npy_to_nifti(list(transformed_cases[i].split()),
+                                                list(multi_view_mask.split()),
                                                 list(target_list[i].split()),
-                                                view='multi', 
-                                                reference=list(target_list[i].split()), 
+                                                view='multi',
+                                                reference=list(target_list[i].split()),
                                                 omat=list(omat_list[i].split()))
 
-
-                print ("Mask file : ", brain_mask_multi)
+                print("Mask file : ", brain_mask_multi)
                 multi_mask.append(brain_mask_multi[0])
             quality_control(multi_mask, target_list, tmp_path, view='multi')
 
@@ -789,12 +767,12 @@ or MRtrix3 maskfilter (mrtrix)''')
                 omat = None
 
             if args.Sagittal:
-                sagittal_mask = npy_to_nifti(transformed_cases, 
-                                            cases_mask_sagittal, 
-                                            target_list,
-                                            view='sagittal', 
-                                            reference=target_list,
-                                            omat=omat)
+                sagittal_mask = npy_to_nifti(transformed_cases,
+                                             cases_mask_sagittal,
+                                             target_list,
+                                             view='sagittal',
+                                             reference=target_list,
+                                             omat=omat)
                 list_masks(sagittal_mask, view='sagittal')
                 quality_control(sagittal_mask, target_list, tmp_path, view='sagittal')
 
@@ -804,12 +782,12 @@ or MRtrix3 maskfilter (mrtrix)''')
                 omat = None
 
             if args.Coronal:
-                coronal_mask = npy_to_nifti(transformed_cases, 
-                                          cases_mask_coronal, 
-                                          target_list,
-                                          view='coronal', 
-                                          reference=target_list,
-                                          omat=omat)
+                coronal_mask = npy_to_nifti(transformed_cases,
+                                            cases_mask_coronal,
+                                            target_list,
+                                            view='coronal',
+                                            reference=target_list,
+                                            omat=omat)
                 list_masks(coronal_mask, view='coronal')
                 quality_control(coronal_mask, target_list, tmp_path, view='coronal')
 
@@ -819,12 +797,12 @@ or MRtrix3 maskfilter (mrtrix)''')
                 omat = None
 
             if args.Axial:
-                axial_mask = npy_to_nifti(transformed_cases, 
-                                         cases_mask_axial, 
-                                         target_list,
-                                         view='axial', 
-                                         reference=target_list,
-                                         omat=omat)
+                axial_mask = npy_to_nifti(transformed_cases,
+                                          cases_mask_axial,
+                                          target_list,
+                                          view='axial',
+                                          reference=target_list,
+                                          omat=omat)
                 list_masks(axial_mask, view='axial')
                 quality_control(axial_mask, target_list, tmp_path, view='axial')
 
@@ -842,5 +820,4 @@ or MRtrix3 maskfilter (mrtrix)''')
 
         end_total_time = datetime.datetime.now()
         total_t = end_total_time - start_total_time
-        print ("Total Time Taken : ", round(int(total_t.seconds)/60, 2), " min")
-
+        print("Total Time Taken : ", round(int(total_t.seconds) / 60, 2), " min")
