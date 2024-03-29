@@ -2,14 +2,10 @@
 
 ```bash
 conda create -y -n dmri_seg python=3.9
-conda activate dmri_seg
+conda activate dmri-seg
 pip install tensorflow==2.11
-conda install -y -c anaconda cudnn
-pip install nvidia-pyindex
-pip install nvidia-tensorrt
-conda install -y -c conda-forge nibabel gputil
-pip install scikit-image>=0.16.2
-pip install git+https://github.com/pnlbwh/conversion.git
+conda install -y -c anaconda::cudnn conda-forge::gputil
+pip install nibabel scikit-image git+https://github.com/pnlbwh/conversion.git
 ```
 
 After build the environment you need to set the LD_LIBRARY_PATH to the lib of your cuda installation:
