@@ -6,7 +6,7 @@ conda activate dmri_seg
 pip install tensorflow==2.11
 conda install -y -c anaconda cudnn
 conda install -y -c conda-forge nibabel gputil
-pip install scikit-image git+https://github.com/pnlbwh/conversion.git\
+pip install scikit-image git+https://github.com/pnlbwh/conversion.git
 pip install nvidia-pyindex nvidia-tensorrt
 ```
 
