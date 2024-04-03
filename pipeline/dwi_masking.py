@@ -774,7 +774,8 @@ or MRtrix3 maskfilter (mrtrix)''')
                                              reference=target_list,
                                              omat=omat)
                 list_masks(sagittal_mask, view='sagittal')
-                quality_control(sagittal_mask, target_list, tmp_path, view='sagittal')
+                if args.snap:
+                    quality_control(sagittal_mask, target_list, tmp_path, view='sagittal')
 
             if args.Coronal:
                 omat = omat_list
@@ -789,7 +790,8 @@ or MRtrix3 maskfilter (mrtrix)''')
                                             reference=target_list,
                                             omat=omat)
                 list_masks(coronal_mask, view='coronal')
-                quality_control(coronal_mask, target_list, tmp_path, view='coronal')
+                if args.snap:
+                    quality_control(coronal_mask, target_list, tmp_path, view='coronal')
 
             if args.Axial:
                 omat = omat_list
@@ -804,7 +806,8 @@ or MRtrix3 maskfilter (mrtrix)''')
                                           reference=target_list,
                                           omat=omat)
                 list_masks(axial_mask, view='axial')
-                quality_control(axial_mask, target_list, tmp_path, view='axial')
+                if args.snap:
+                    quality_control(axial_mask, target_list, tmp_path, view='axial')
 
             for i in range(0, len(cases_mask_sagittal)):
                 clear(path.dirname(cases_mask_sagittal[i]))
