@@ -9,12 +9,12 @@ pipeline.py
 02)  Checks if the Image axis is in the correct order for *.nhdr and *.nrrd file
 03)  Extracts b0 Image
 04)  Converts nhdr to nii.gz
-05)  Applys Rigid-Body tranformation to standard MNI space using
+05)  Applies rigid-body tranformation to standard MNI space using
 06)  Normalize the Image by 99th percentile
-07)  Neural network brain mask prediction across the 3 principal axis
-08)  Performs Multi View Aggregation
-10)  Applys Inverse tranformation
-10)  Cleaning
+07)  Predicts neural network brain mask across the 3 principal axes
+08)  Performs multi-view aggregation
+10)  Applies inverse tranformation
+10)  Cleans holes
 """
 
 # pylint: disable=invalid-name
