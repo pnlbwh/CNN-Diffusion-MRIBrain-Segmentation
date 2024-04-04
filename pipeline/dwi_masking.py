@@ -512,6 +512,7 @@ def quality_control(mask_list, target_list, tmp_path, view='default'):
     '''The slicesdir command takes the list of images and creates a simple web-page containing snapshots for each of the images.
     Once it has finished running it tells you the name of the web page to open in your web browser, to view the snapshots.
     '''
+
     slices = " "
     for i in range(0, len(mask_list)):
         str1 = target_list[i]
@@ -521,10 +522,10 @@ def quality_control(mask_list, target_list, tmp_path, view='default'):
     final = "slicesdir -o" + slices
     dir_bak = os.getcwd()
     os.chdir(tmp_path)
+
     process = subprocess.Popen(final, shell=True)
     process.wait()
     os.chdir(dir_bak)
-
     mask_folder = os.path.join(tmp_path, 'slicesdir')
     mask_newfolder = os.path.join(tmp_path, 'slicesdir_' + view)
 
