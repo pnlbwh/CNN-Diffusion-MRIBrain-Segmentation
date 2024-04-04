@@ -512,7 +512,6 @@ def quality_control(mask_list, target_list, tmp_path, view='default'):
     '''The slicesdir command takes the list of images and creates a simple web-page containing snapshots for each of the images.
     Once it has finished running it tells you the name of the web page to open in your web browser, to view the snapshots.
     '''
-
     slices = " "
     for i in range(0, len(mask_list)):
         str1 = target_list[i]
@@ -522,13 +521,13 @@ def quality_control(mask_list, target_list, tmp_path, view='default'):
     final = "slicesdir -o" + slices
     dir_bak = os.getcwd()
     os.chdir(tmp_path)
-
     process = subprocess.Popen(final, shell=True)
     process.wait()
     os.chdir(dir_bak)
 
     mask_folder = os.path.join(tmp_path, 'slicesdir')
     mask_newfolder = os.path.join(tmp_path, 'slicesdir_' + view)
+
     if os.path.exists(mask_newfolder):
         process = subprocess.Popen('rm -rf ' + mask_newfolder, shell=True)
         process.wait()
@@ -759,7 +758,8 @@ or MRtrix3 maskfilter (mrtrix)''')
 
                 print("Mask file : ", brain_mask_multi)
                 multi_mask.append(brain_mask_multi[0])
-            quality_control(multi_mask, target_list, tmp_path, view='multi')
+            if args.snap:
+                quality_control(multi_mask, target_list, tmp_path, view='multi')
 
             if args.Sagittal:
                 omat = omat_list
@@ -774,7 +774,8 @@ or MRtrix3 maskfilter (mrtrix)''')
                                              reference=target_list,
                                              omat=omat)
                 list_masks(sagittal_mask, view='sagittal')
-                quality_control(sagittal_mask, target_list, tmp_path, view='sagittal')
+                if args.snap:
+                    quality_control(sagittal_mask, target_list, tmp_path, view='sagittal')
 
             if args.Coronal:
                 omat = omat_list
@@ -789,7 +790,8 @@ or MRtrix3 maskfilter (mrtrix)''')
                                             reference=target_list,
                                             omat=omat)
                 list_masks(coronal_mask, view='coronal')
-                quality_control(coronal_mask, target_list, tmp_path, view='coronal')
+                if args.snap:
+                    quality_control(coronal_mask, target_list, tmp_path, view='coronal')
 
             if args.Axial:
                 omat = omat_list
@@ -804,7 +806,8 @@ or MRtrix3 maskfilter (mrtrix)''')
                                           reference=target_list,
                                           omat=omat)
                 list_masks(axial_mask, view='axial')
-                quality_control(axial_mask, target_list, tmp_path, view='axial')
+                if args.snap:
+                    quality_control(axial_mask, target_list, tmp_path, view='axial')
 
             for i in range(0, len(cases_mask_sagittal)):
                 clear(path.dirname(cases_mask_sagittal[i]))
