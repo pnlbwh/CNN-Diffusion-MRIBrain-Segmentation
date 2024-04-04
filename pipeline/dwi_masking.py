@@ -568,7 +568,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', type=int, dest='percentile', default=99, help='''The percentile of image 
 intensity value to be used as a threshold for normalizing a b0 image to [0,1]''')
 
-    parser.add_argument('-nproc', type=int, dest='cr', default=8, help='number of processes to use')
+    parser.add_argument('-nproc', type=int, dest='cr', default=1, help='number of processes to use')
 
     parser.add_argument('-filter', choices=['scipy', 'mrtrix'], help='''perform morphological operation on the 
 CNN generated mask to clean up holes and islands, can be done through a provided script (scipy) 
