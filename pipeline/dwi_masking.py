@@ -633,42 +633,35 @@ or MRtrix3 maskfilter (mrtrix)''')
                     data_n.append(normalize(transformed_case, args.percentile))
 
             else:
-                """
-                Enable Multi core Processing for pre processing
-                manager provide a way to create data which can be shared between different processes
-                """
-                with Manager() as manager:
-                    target_list = manager.list()
-                    with mp.Pool(processes=args.cr) as pool:
-                        for case in case_arr:
-                            pool.apply_async(pre_process, (case, target_list))
-                        pool.close()
-                        pool.join()
+                with mp.Pool(processes=args.cr) as pool:
+                    res=[]
+                    for case in case_arr:
+                        res.append(pool.apply_async(pre_process, (case,)))
 
-                    target_list = list(target_list)
+                    target_list=[r.get() for r in res]
+                    pool.close()
+                    pool.join()
 
-                    """
-                    Enable Multi core Processing for ANTS Registration
-                    manager provide a way to create data which can be shared between different processes
-                    """
-                    result = manager.list()
 
-                    with mp.Pool(processes=args.cr) as pool:
-                        for target in target_list:
-                            pool.apply_async(ANTS_rigid_body_trans, (target, result, reference))
-                        pool.close()
-                        pool.join()
+                with mp.Pool(processes=args.cr) as pool:
+                    res=[]
+                    for target in target_list:
+                        res.append(pool.apply_async(ANTS_rigid_body_trans, (target, reference,)))
 
-                    result = list(result)
-                    data_n = manager.list()
+                    result=[r.get() for r in res]
+                    pool.close()
+                    pool.join()
 
-                    with mp.Pool(processes=args.cr) as pool:
-                        for transformed_case, _ in result:
-                            pool.apply_async(normalize, (transformed_case, args.percentile, data_n))
-                        pool.close()
-                        pool.join()
 
-                    data_n = list(data_n)
+                with mp.Pool(processes=args.cr) as pool:
+                    res=[]
+                    for transformed_case, _ in result:
+                        res.append(pool.apply_async(normalize, (transformed_case, args.percentile,)))
+
+                    data_n=[r.get() for r in res]
+                    pool.close()
+                    pool.join()
+
 
             count = 0
             for b0_nifti in data_n:
