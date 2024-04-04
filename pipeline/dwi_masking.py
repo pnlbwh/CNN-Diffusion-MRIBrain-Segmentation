@@ -759,7 +759,8 @@ or MRtrix3 maskfilter (mrtrix)''')
 
                 print("Mask file : ", brain_mask_multi)
                 multi_mask.append(brain_mask_multi[0])
-            quality_control(multi_mask, target_list, tmp_path, view='multi')
+            if args.snap:
+                quality_control(multi_mask, target_list, tmp_path, view='multi')
 
             if args.Sagittal:
                 omat = omat_list
