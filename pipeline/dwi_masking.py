@@ -213,7 +213,7 @@ def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
     return output_file
 
 
-def normalize(b0_resampled, percentile, data_n):
+def normalize(b0_resampled, percentile):
     """
     Intensity based segmentation of MR images is hampered by radio frerquency field
     inhomogeneity causing intensity variation. The intensity range is typically
@@ -245,7 +245,7 @@ def normalize(b0_resampled, percentile, data_n):
     data[data < 0] = 0
     image_dwi = nib.Nifti1Image(data, img.affine, img.header)
     nib.save(image_dwi, output_file)
-    data_n.append(output_file)
+    return output_file
 
 
 def save_nifti(fname, data, affine=None, hdr=None):
@@ -407,7 +407,7 @@ def split(cases_file, case_arr, view='default'):
     return predict_mask
 
 
-def ANTS_rigid_body_trans(b0_nii, result, reference=None):
+def ANTS_rigid_body_trans(b0_nii, reference=None):
     print("Performing ants rigid body transformation...")
     input_file = b0_nii
     case_name = path.basename(input_file)
@@ -423,7 +423,7 @@ def ANTS_rigid_body_trans(b0_nii, result, reference=None):
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-Warped.nii.gz'
     transformed_file = path.join(path.dirname(input_file), output_name)
 
-    result.append((transformed_file, omat_file))
+    return (transformed_file, omat_file)
 
 
 def ANTS_inverse_transform(predicted_mask, reference, omat='default'):
@@ -458,7 +458,7 @@ def list_masks(mask_list, view='default'):
         print(view + " Mask file = ", mask_list[i])
 
 
-def pre_process(input_file, target_list, b0_threshold=50.):
+def pre_process(input_file, b0_threshold=50.):
     from conversion import nifti_write, read_bvals
 
     if path.isfile(input_file):
@@ -487,7 +487,7 @@ def pre_process(input_file, target_list, b0_threshold=50.):
         np.nan_to_num(b0).clip(min=0., out=b0)
         nib.Nifti1Image(b0, affine=dwi.affine, header=dwi.header).to_filename(b0_nii)
 
-        target_list.append((b0_nii))
+        return b0_nii
 
     else:
         print("File not found ", input_file)
@@ -617,42 +617,58 @@ or MRtrix3 maskfilter (mrtrix)''')
             y_dim = 256
             z_dim = 256
             transformed_cases = []
-            """
-            Enable Multi core Processing for pre processing
-            manager provide a way to create data which can be shared between different processes
-            """
-            with Manager() as manager:
-                target_list = manager.list()
-                with mp.Pool(processes=args.cr) as pool:
-                    for case in case_arr:
-                        pool.apply_async(pre_process, (case, target_list))
-                    pool.close()
-                    pool.join()
 
-                target_list = list(target_list)
+            if args.cr==1:
 
+                target_list=[]
+                for case in case_arr:
+                    target_list.append(pre_process(case))
+
+                result=[]
+                for target in target_list:
+                    result.append(ANTS_rigid_body_trans(target,reference))
+
+                data_n=[]
+                for transformed_case, _ in result:
+                    data_n.append(normalize(transformed_case, args.percentile))
+
+            else:
                 """
-                Enable Multi core Processing for ANTS Registration
+                Enable Multi core Processing for pre processing
                 manager provide a way to create data which can be shared between different processes
                 """
-                result = manager.list()
+                with Manager() as manager:
+                    target_list = manager.list()
+                    with mp.Pool(processes=args.cr) as pool:
+                        for case in case_arr:
+                            pool.apply_async(pre_process, (case, target_list))
+                        pool.close()
+                        pool.join()
 
-                with mp.Pool(processes=args.cr) as pool:
-                    for target in target_list:
-                        pool.apply_async(ANTS_rigid_body_trans, (target, result, reference))
-                    pool.close()
-                    pool.join()
+                    target_list = list(target_list)
 
-                result = list(result)
-                data_n = manager.list()
+                    """
+                    Enable Multi core Processing for ANTS Registration
+                    manager provide a way to create data which can be shared between different processes
+                    """
+                    result = manager.list()
 
-                with mp.Pool(processes=args.cr) as pool:
-                    for transformed_case, _ in result:
-                        pool.apply_async(normalize, (transformed_case, args.percentile, data_n))
-                    pool.close()
-                    pool.join()
+                    with mp.Pool(processes=args.cr) as pool:
+                        for target in target_list:
+                            pool.apply_async(ANTS_rigid_body_trans, (target, result, reference))
+                        pool.close()
+                        pool.join()
 
-                data_n = list(data_n)
+                    result = list(result)
+                    data_n = manager.list()
+
+                    with mp.Pool(processes=args.cr) as pool:
+                        for transformed_case, _ in result:
+                            pool.apply_async(normalize, (transformed_case, args.percentile, data_n))
+                        pool.close()
+                        pool.join()
+
+                    data_n = list(data_n)
 
             count = 0
             for b0_nifti in data_n:
@@ -759,7 +775,8 @@ or MRtrix3 maskfilter (mrtrix)''')
 
                 print("Mask file : ", brain_mask_multi)
                 multi_mask.append(brain_mask_multi[0])
-            quality_control(multi_mask, target_list, tmp_path, view='multi')
+            if args.snap:
+                quality_control(multi_mask, target_list, tmp_path, view='multi')
 
             if args.Sagittal:
                 omat = omat_list
