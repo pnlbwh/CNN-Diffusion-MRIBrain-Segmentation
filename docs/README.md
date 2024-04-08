@@ -112,8 +112,16 @@ conda install -y anaconda::cudnn conda-forge::gputil
 pip install nibabel scikit-image git+https://github.com/pnlbwh/conversion.git
 ```
 
+## 3. ANTs
 
-## 3. CUDA environment
+You need to have a working `antsRegistrationSyNQuick.sh` in your `PATH`.
+You can build ANTs following their [GitHub](https://github.com/ANTsX/ANTs).
+Or you can use our pre-built ANTs:
+
+> conda install -y pnlbwh::ants
+
+
+## 4. CUDA environment
 
 To run this program on GPU, you must set `LD_LIBRARY_PATH`:
 
@@ -131,7 +139,7 @@ directory. You can also use that CUDA instead of `${CONDA_PREFIX}/lib64/`:
 Open a new terminal for the changes to take effect.
 
 
-## 4. Download models
+## 5. Download models
 
 Download model architecture, weights and IIT mean b0 template from 
 https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases as follows:
@@ -146,7 +154,7 @@ https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases as follow
 They will be extracted to `CNN-Diffusion-MRIBrain-Segmentation/model_folder` directory.
 
 
-## 5. mrtrix
+## 6. mrtrix
 
 This software makes use of only one binary from mrtrix, `maskfilter`. If you already have mrtrix installed on your 
 system, you can use it. Moreover, you can follow [this](https://mrtrix.readthedocs.io/en/latest/installation/linux_install.html) instruction to install mrtrix.
