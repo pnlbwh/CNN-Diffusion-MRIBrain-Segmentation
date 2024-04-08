@@ -15,8 +15,6 @@ Table of Contents
    * [Installation](#installation)
       * [1. Python 3](#1-python-3)
       * [2. Conda environment](#2-conda-environment)
-         * [CPU only](#cpu-only)
-         * [GPU support](#gpu-support)
       * [3. CUDA environment](#3-cuda-environment)
       * [4. Download models](#4-download-models)
       * [5. mrtrix](#5-mrtrix)
@@ -36,7 +34,6 @@ Table of Contents
    * [Issues](#issues)
    * [Reference](#reference)
 
-Table of contents created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 
 # Segmenting diffusion MRI brain
@@ -86,35 +83,44 @@ Activate the conda environment:
 
     source ~/miniconda3/bin/activate # should introduce '(base)' in front of each line
 
-The software is written intelligently to work with or without GPU support. Two *yml* environment files 
-are provided to facilitate creation of `dmri_seg` conda environment.
+The software is written intelligently to work with or without GPU support.
 
+<details><summary>Old conda environment</summary>
+
+<br>
+  
+We had provided two [*yml* files](../archive/) to facilitate the creation of `dmri_seg` conda environment.
+
+* In the initial stage of this program development in 2020, the [CPU environment](../archive/environment_cpu.yml) built and worked fine.
+  But it does not work anymore.
+* The [GPU environment](../archive/environment_gpu.yml) works fine on older GPUs.
+  But in 2023, it did not produce a valid mask on modern GPUs e.g. NVIDIA RTX 4000, A6000, A100.
+* So now in 2024, we recommend the below step-by-step instructions to build an environment that
+  successfully generates valid masks on both GPU and CPU devices.
+
+</details>
    
 ## 2. Conda environment
-   
-### CPU only
 
-    conda env create -f environment_cpu.yml
+Step-by-step instructions:
 
-
-### GPU support
-
-    conda env create -f environment_gpu.yml
-       
-Finally, activate the conda environment using:
-
-    conda activate dmri_seg
-    
-
-If you run into any error, please see [Troubleshooting](#troubleshooting).
+```
+conda create -y -n dmri_seg python=3.9
+conda activate dmri_seg
+pip install tensorflow==2.11
+conda install -y anaconda::cudnn conda-forge::gputil
+pip install nibabel scikit-image git+https://github.com/pnlbwh/conversion.git
+```
 
 
 ## 3. CUDA environment
 
-When you have GPU support, provided that you used `environment_gpu.yml` for creating conda environment, 
-you should set environment variables in order to run and write CUDA enabled programs. 
-The NVIDIA graphics driver and CUDA compilier are already installed on machines that support CUDA. 
+To run this program on GPU, you must set `LD_LIBRARY_PATH`:
 
+> export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib64/:${LD_LIBRARY_PATH}
+
+Your NVIDIA driver should be compatible with CUDA. System administrators install a matched CUDA in `/usr/local/cuda-*/`
+directory. Instead of the above, you can also use the other CUDA libraries.
 If you use bash, add the following lines to the bottom of your `~/.bashrc` file:
 
     # add cuda tools to command path
