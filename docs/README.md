@@ -68,7 +68,7 @@ NeuroImage 186 (2019): 713-727.
 
 # Dependencies
 
-* python 3
+* Python 3
 * ANTs
 
 # Installation
