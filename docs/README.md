@@ -19,6 +19,7 @@ Table of Contents
    * [4. CUDA environment](#4-cuda-environment)
    * [5. Download models](#5-download-models)
    * [6. mrtrix](#6-mrtrix)
+   * [7. FSL](#7-fsl)
 * [Singularity container](#singularity-container)
 * [Running the pipeline](#running-the-pipeline)
    * [Prediction](#prediction)
@@ -167,6 +168,15 @@ use a Python translated version of the above binary.
 See [Clean up](#3-clean-up) for details.
 
 
+## 7. FSL
+
+This software marginally depends on FSL in the sense that you need FSL's `slicesdir` executable
+to generate snapshots of image-mask for being able to QC it. Hence, we do not recommend
+sourcing the entire FSL environment. Instead, you should just put `slicesdir` in your PATH:
+
+> export PATH=/path/to/fsl-6.0.7/share/fsl/bin:$PATH
+
+
 # Singularity container
 
 The dependencies in [environment_cpu.yml](../environment_cpu.yml) have been found to be volatile. So we have archived 
@@ -201,7 +211,9 @@ Prediction refers to creation of masks based on pre-trained model. This is the c
     pipeline/dwi_masking.py -i dwi_list.txt -f model_folder
     pipeline/dwi_masking.py -i dwi_list.txt -f model_folder -nproc 16
     pipeline/dwi_masking.py -i b0_list.txt -f model_folder
-    
+    pipeline/dwi_masking.py -i b0_list.txt -f model_folder -qc 1
+
+
 * `dwi_list.txt` and `b0_list.txt` must contain full paths to diffusion and b0 volumes respectively
 
 * Each created mask is saved in the directory of input volume with name `dwib0_{PREFIX}-multi_BrainMask.nii.gz`
