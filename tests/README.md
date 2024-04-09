@@ -9,7 +9,7 @@ it is depdendent on the following executables:
 * bet
 
 We recommend only putting the above executables in `PATH` without sourcing extenal environments
-such as FSL's. For example--`fslroi`, `bet` could be put in PATH as:
+such as FSL's. For example--`fslroi`, `bet` could be put in `PATH` as:
 
 > export PATH=/path/to/fsl-6.0.7/share/fsl/bin:$PATH
 
