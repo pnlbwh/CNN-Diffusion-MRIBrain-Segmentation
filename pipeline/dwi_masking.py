@@ -563,7 +563,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-qc", type=str2bool, dest='snap', nargs='?',
                         const=True, default=False,
-                        help="open snapshots in your web browser (yes/true/y/1)")
+                        help="take snapshots and open them in your web browser (yes/true/y/1)")
 
     parser.add_argument('-p', type=int, dest='percentile', default=99, help='''The percentile of image 
 intensity value to be used as a threshold for normalizing a b0 image to [0,1]''')
