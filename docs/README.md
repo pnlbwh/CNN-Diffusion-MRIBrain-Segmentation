@@ -95,10 +95,11 @@ We had provided two [*yml* files](../archive/) to facilitate the creation of `dm
   But it does not work anymore.
 * The [GPU environment](../archive/environment_gpu.yml) works fine on older GPUs.
   But in 2023, it did not produce a valid mask on modern GPUs e.g. NVIDIA RTX 4000, A6000, A100.
-* So now in 2024, we recommend the below step-by-step instructions to build an environment that
-  successfully generates valid masks on both GPU and CPU devices.
 
 </details>
+
+In 2024, we recommend the below step-by-step instructions to build an environment that
+  successfully generated valid masks on both GPU and CPU devices.
    
 ## 2. Conda environment
 
