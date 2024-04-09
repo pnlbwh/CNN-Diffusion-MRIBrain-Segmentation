@@ -1,0 +1,14 @@
+### Tests
+
+[pipeline_test.sh](./pipeline_test.sh) is a convenient testing infrastructure.
+In addition to the prerequisites mentioned in [instructions](../docs/README.md#installation),
+it is depdendent on the following executables:
+
+* dcm2niix
+* fslroi
+* bet
+
+We recommend only putting the above executables in `PATH` without sourcing extenal environments
+such as FSL's to run `pipeline_test.sh`.
+
+Moreover, you can put an `exit` statement after any line between 70-81 to run one or more tests.
