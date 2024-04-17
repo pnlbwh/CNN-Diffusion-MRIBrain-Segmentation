@@ -138,6 +138,7 @@ Your NVIDIA driver should be compatible with CUDA.
 
 <details><summary>System's CUDA</summary>
 <br>
+  
 In some servers, a matched CUDA may be available in `/usr/local/cuda-*/`
 directory. You can also use that CUDA instead of `${CONDA_PREFIX}/lib/`:
 
