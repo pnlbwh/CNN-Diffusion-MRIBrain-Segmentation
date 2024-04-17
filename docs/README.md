@@ -134,16 +134,16 @@ To run this program on GPU, you must set `LD_LIBRARY_PATH`:
 
 > export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib/:${LD_LIBRARY_PATH}
 
-Your NVIDIA driver should be compatible with CUDA. System administrators install a matched CUDA in `/usr/local/cuda-*/`
+Your NVIDIA driver should be compatible with CUDA.
+
+In some servers, a matched CUDA may be available in `/usr/local/cuda-*/`
 directory. You can also use that CUDA instead of `${CONDA_PREFIX}/lib/`:
 
     # add cuda tools to your PATH
     export PATH=/usr/local/cuda-9.1/bin:${PATH}
 
     # add cuda libraries to your LD_LIBRARY_PATH
-    export LD_LIBRARY_PATH=/usr/local/cuda-9.1/lib64:$LD_LIBRARY_PATH:
-
-Open a new terminal for the changes to take effect.
+    export LD_LIBRARY_PATH=/usr/local/cuda-9.1/lib64:$LD_LIBRARY_PATH
 
 
 ## 5. Download models
