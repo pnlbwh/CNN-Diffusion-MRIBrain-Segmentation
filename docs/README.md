@@ -124,6 +124,9 @@ Or you can use our pre-built ANTs:
 
 > conda install -y pnlbwh::ants
 
+Either way, you need to set the environment variable `ANTSPATH`. For the latter method, it is:
+
+> export ANTSPATH=${CONDA_PREFIX}/bin
 
 ## 4. CUDA environment
 
