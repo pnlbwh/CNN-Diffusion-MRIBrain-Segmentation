@@ -146,7 +146,7 @@ directory. You can also use that CUDA instead of `${CONDA_PREFIX}/lib/`:
     export PATH=/usr/local/cuda-9.1/bin:${PATH}
 
     # add cuda libraries to your LD_LIBRARY_PATH
-    export LD_LIBRARY_PATH=/usr/local/cuda-9.1/lib64:$LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=/usr/local/cuda-9.1/lib64:${LD_LIBRARY_PATH}
 
 </details>
 
