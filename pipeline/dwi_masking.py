@@ -30,7 +30,6 @@ import datetime
 import pathlib
 import nibabel as nib
 import numpy as np
-from multiprocessing import Manager
 
 # Suppress tensor flow message
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -540,7 +539,7 @@ def quality_control(mask_list, target_list, tmp_path, view='default'):
 if __name__ == '__main__':
 
     start_total_time = datetime.datetime.now()
-    # parser module for input arguments
+    
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', action='store', dest='dwi', type=str,
@@ -563,12 +562,12 @@ if __name__ == '__main__':
 
     parser.add_argument("-qc", type=str2bool, dest='snap', nargs='?',
                         const=True, default=False,
-                        help="take snapshots and open them in your web browser (yes/true/y/1)")
+                        help="advanced option to take snapshots and open them in your web browser (yes/true/y/1)")
 
-    parser.add_argument('-p', type=int, dest='percentile', default=99, help='''The percentile of image 
+    parser.add_argument('-p', type=int, dest='percentile', default=99, help='''percentile of image
 intensity value to be used as a threshold for normalizing a b0 image to [0,1]''')
 
-    parser.add_argument('-nproc', type=int, dest='cr', default=1, help='number of processes to use')
+    parser.add_argument('-nproc', type=int, dest='nproc', default=1, help='number of processes to use')
 
     parser.add_argument('-filter', choices=['scipy', 'mrtrix'], help='''perform morphological operation on the 
 CNN generated mask to clean up holes and islands, can be done through a provided script (scipy) 
@@ -580,7 +579,6 @@ or MRtrix3 maskfilter (mrtrix)''')
             parser.print_help()
             parser.error('too few arguments')
             sys.exit(0)
-
     except SystemExit:
         sys.exit(0)
 
@@ -618,7 +616,7 @@ or MRtrix3 maskfilter (mrtrix)''')
             z_dim = 256
             transformed_cases = []
 
-            if args.cr==1:
+            if args.nproc==1:
 
                 target_list=[]
                 for case in case_arr:
@@ -633,7 +631,7 @@ or MRtrix3 maskfilter (mrtrix)''')
                     data_n.append(normalize(transformed_case, args.percentile))
 
             else:
-                with mp.Pool(processes=args.cr) as pool:
+                with mp.Pool(processes=args.nproc) as pool:
                     res=[]
                     for case in case_arr:
                         res.append(pool.apply_async(pre_process, (case,)))
@@ -643,7 +641,7 @@ or MRtrix3 maskfilter (mrtrix)''')
                     pool.join()
 
 
-                with mp.Pool(processes=args.cr) as pool:
+                with mp.Pool(processes=args.nproc) as pool:
                     res=[]
                     for target in target_list:
                         res.append(pool.apply_async(ANTS_rigid_body_trans, (target, reference,)))
@@ -653,7 +651,7 @@ or MRtrix3 maskfilter (mrtrix)''')
                     pool.join()
 
 
-                with mp.Pool(processes=args.cr) as pool:
+                with mp.Pool(processes=args.nproc) as pool:
                     res=[]
                     for transformed_case, _ in result:
                         res.append(pool.apply_async(normalize, (transformed_case, args.percentile,)))
