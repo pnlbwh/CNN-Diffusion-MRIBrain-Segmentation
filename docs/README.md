@@ -183,6 +183,10 @@ sourcing the entire FSL environment. Instead, you should just put `slicesdir` in
 
 > export PATH=/path/to/fsl-6.0.7/share/fsl/bin:$PATH
 
+In additon, you should set:
+
+> export FSLOUTPUTTYPE=NIFTI_GZ
+
 
 # Singularity container
 
