@@ -8,35 +8,35 @@ Brigham and Women's Hospital (Harvard Medical School).
 Table of Contents
 =================
 
-   * [Table of Contents](#table-of-contents)
-   * [Segmenting diffusion MRI brain](#segmenting-diffusion-mri-brain)
-   * [Citation](#citation)
-   * [Dependencies](#dependencies)
-   * [Installation](#installation)
-      * [1. Python 3](#1-python-3)
-      * [2. Conda environment](#2-conda-environment)
-         * [CPU only](#cpu-only)
-         * [GPU support](#gpu-support)
-      * [3. CUDA environment](#3-cuda-environment)
-      * [4. Download models](#4-download-models)
-      * [5. mrtrix](#5-mrtrix)
-   * [Singularity container](#singularity-container)
-   * [Running the pipeline](#running-the-pipeline)
-      * [Prediction](#prediction)
-      * [Training](#training)
-         * [1. B0 extraction](#1-b0-extraction)
-         * [2. Registration](#2-registration)
-         * [3. Preprocessing](#3-preprocessing)
-         * [4. Deep learning](#4-deep-learning)
-   * [Method](#method)
-      * [1. Model Architecture](#1-model-architecture)
-      * [2. Multi View Aggregation:](#2-multi-view-aggregation)
-      * [3. Clean up](#3-clean-up)
-   * [Troubleshooting](#troubleshooting)
-   * [Issues](#issues)
-   * [Reference](#reference)
+* [Table of Contents](#table-of-contents)
+* [Segmenting diffusion MRI brain](#segmenting-diffusion-mri-brain)
+* [Citation](#citation)
+* [Dependencies](#dependencies)
+* [Installation](#installation)
+   * [1. Python 3](#1-python-3)
+   * [2. Conda environment](#2-conda-environment)
+   * [3. ANTs](#3-ants)
+   * [4. CUDA environment](#4-cuda-environment)
+   * [5. Download models](#5-download-models)
+   * [6. mrtrix](#6-mrtrix)
+   * [7. FSL](#7-fsl)
+* [Singularity container](#singularity-container)
+* [Running the pipeline](#running-the-pipeline)
+   * [Prediction](#prediction)
+   * [Training](#training)
+      * [1. B0 extraction](#1-b0-extraction)
+      * [2. Registration](#2-registration)
+      * [3. Preprocessing](#3-preprocessing)
+      * [4. Deep learning](#4-deep-learning)
+* [Method](#method)
+   * [1. Model Architecture](#1-model-architecture)
+   * [2. Multi View Aggregation:](#2-multi-view-aggregation)
+   * [3. Clean up](#3-clean-up)
+* [Troubleshooting](#troubleshooting)
+* [Issues](#issues)
+* [Reference](#reference)
 
-Table of contents created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+<!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 
 
 # Segmenting diffusion MRI brain
@@ -71,7 +71,7 @@ NeuroImage 186 (2019): 713-727.
 
 # Dependencies
 
-* python 3
+* Python 3
 * ANTs
 
 # Installation
@@ -86,47 +86,71 @@ Activate the conda environment:
 
     source ~/miniconda3/bin/activate # should introduce '(base)' in front of each line
 
-The software is written intelligently to work with or without GPU support. Two *yml* environment files 
-are provided to facilitate creation of `dmri_seg` conda environment.
+The software is written intelligently to work with or without GPU support.
 
+<details><summary>Old conda environment</summary>
+
+<br>
+  
+We had provided two [*yml* files](../archive/) to facilitate the creation of `dmri_seg` conda environment.
+
+* In the initial stage of this program development in 2020, the [CPU environment](../archive/environment_cpu.yml) built and worked fine.
+  But it does not work anymore.
+* The [GPU environment](../archive/environment_gpu.yml) works fine on older GPUs.
+  But in 2023, it did not produce a valid mask on modern GPUs e.g. NVIDIA RTX 4000, A6000, A100.
+
+</details>
+
+In 2024, we recommend the below step-by-step instructions to build an environment that
+  successfully generated valid masks on both GPU and CPU devices.
    
 ## 2. Conda environment
-   
-### CPU only
 
-    conda env create -f environment_cpu.yml
+Step-by-step instructions:
 
+```
+conda create -y -n dmri_seg python=3.9
+conda activate dmri_seg
+pip install tensorflow==2.11
+conda install -y anaconda::cudnn conda-forge::gputil
+pip install nibabel scikit-image git+https://github.com/pnlbwh/conversion.git
+```
 
-### GPU support
+## 3. ANTs
 
-    conda env create -f environment_gpu.yml
-       
-Finally, activate the conda environment using:
+You need to have a working `antsRegistrationSyNQuick.sh` in your `PATH`.
+You can build ANTs following their [GitHub](https://github.com/ANTsX/ANTs).
+Or you can use our pre-built ANTs:
 
-    conda activate dmri_seg
-    
+> conda install -y pnlbwh::ants
 
-If you run into any error, please see [Troubleshooting](#troubleshooting).
+Either way, you need to set the environment variable `ANTSPATH`. For the latter method, it is:
 
+> export ANTSPATH=${CONDA_PREFIX}/bin
 
-## 3. CUDA environment
+## 4. CUDA environment
 
-When you have GPU support, provided that you used `environment_gpu.yml` for creating conda environment, 
-you should set environment variables in order to run and write CUDA enabled programs. 
-The NVIDIA graphics driver and CUDA compilier are already installed on machines that support CUDA. 
+To run this program on GPU, you must set `LD_LIBRARY_PATH`:
 
-If you use bash, add the following lines to the bottom of your `~/.bashrc` file:
+> export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib/:${LD_LIBRARY_PATH}
 
-    # add cuda tools to command path
+Your NVIDIA driver should be compatible with CUDA.
+
+<details><summary>System's CUDA</summary>
+<br>
+  
+In some servers, a matched CUDA may be available in `/usr/local/cuda-*/`
+directory. You can also use that CUDA instead of `${CONDA_PREFIX}/lib/`:
+
+    # add cuda tools to your PATH
     export PATH=/usr/local/cuda-9.1/bin:${PATH}
 
-    # add the CUDA binary and library directory to your LD_LIBRARY_PATH
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-9.1/lib64
-  
-Open a new terminal for the changes to take effect.
+    # add cuda libraries to your LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=/usr/local/cuda-9.1/lib64:${LD_LIBRARY_PATH}
 
+</details>
 
-## 4. Download models
+## 5. Download models
 
 Download model architecture, weights and IIT mean b0 template from 
 https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases as follows:
@@ -141,7 +165,7 @@ https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases as follow
 They will be extracted to `CNN-Diffusion-MRIBrain-Segmentation/model_folder` directory.
 
 
-## 5. mrtrix
+## 6. mrtrix
 
 This software makes use of only one binary from mrtrix, `maskfilter`. If you already have mrtrix installed on your 
 system, you can use it. Moreover, you can follow [this](https://mrtrix.readthedocs.io/en/latest/installation/linux_install.html) instruction to install mrtrix.
@@ -149,6 +173,19 @@ However, if you are unable to use/install mrtrix, just set `-filter scipy` argum
 use a Python translated version of the above binary.
 
 See [Clean up](#3-clean-up) for details.
+
+
+## 7. FSL
+
+This software marginally depends on FSL in the sense that you need FSL's `slicesdir` executable
+to generate snapshots of image-mask for being able to QC it. Hence, we do not recommend
+sourcing the entire FSL environment. Instead, you should just put `slicesdir` in your PATH:
+
+> export PATH=/path/to/fsl-6.0.7/share/fsl/bin:$PATH
+
+In additon, you should set:
+
+> export FSLOUTPUTTYPE=NIFTI_GZ
 
 
 # Singularity container
@@ -185,7 +222,9 @@ Prediction refers to creation of masks based on pre-trained model. This is the c
     pipeline/dwi_masking.py -i dwi_list.txt -f model_folder
     pipeline/dwi_masking.py -i dwi_list.txt -f model_folder -nproc 16
     pipeline/dwi_masking.py -i b0_list.txt -f model_folder
-    
+    pipeline/dwi_masking.py -i b0_list.txt -f model_folder -qc 1
+
+
 * `dwi_list.txt` and `b0_list.txt` must contain full paths to diffusion and b0 volumes respectively
 
 * Each created mask is saved in the directory of input volume with name `dwib0_{PREFIX}-multi_BrainMask.nii.gz`

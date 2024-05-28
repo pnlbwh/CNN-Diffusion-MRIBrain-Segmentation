@@ -12,7 +12,7 @@ def process_trainingdata(dwib0_arr):
     count = 0
     for b0 in dwib0_arr:
         img = nib.load(b0)
-        imgF32 = img.get_data().astype(np.float32)
+        imgF32 = img.get_fdata().astype(np.float32)
         ''' Intensity based segmentation of MR images is hampered by radio frerquency field
             inhomogeneity causing intensity variation. The intensity range is typically
             scaled between the highest and lowest signal in the Image. Intensity values
