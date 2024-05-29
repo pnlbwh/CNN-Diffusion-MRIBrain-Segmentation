@@ -7,6 +7,7 @@ it is depdendent on the following executables:
 * dcm2niix
 * fslroi
 * bet
+* antsRegistrationSyNQuick.sh
 
 We recommend only putting the above executables in `PATH` without sourcing extenal environments
 such as FSL's. For example--`fslroi`, `bet` could be put in `PATH` as:
