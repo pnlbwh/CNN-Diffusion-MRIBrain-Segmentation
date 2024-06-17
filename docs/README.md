@@ -185,7 +185,10 @@ sourcing the entire FSL environment. Instead, you should just put `slicesdir` in
 
 In additon, you should set:
 
-> export FSLOUTPUTTYPE=NIFTI_GZ
+```
+export FSLDIR=/path/to/fsl-6.0.7/
+export FSLOUTPUTTYPE=NIFTI_GZ
+```
 
 
 # Singularity container
