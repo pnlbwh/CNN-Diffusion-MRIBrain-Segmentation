@@ -18,8 +18,9 @@ Table of Contents
    * [3. ANTs](#3-ants)
    * [4. CUDA environment](#4-cuda-environment)
    * [5. Download models](#5-download-models)
-   * [6. mrtrix](#6-mrtrix)
-   * [7. FSL](#7-fsl)
+   * [6. Run script](#6-run-script)
+   * [7. mrtrix](#7-mrtrix)
+   * [8. FSL](#8-fsl)
 * [Singularity container](#singularity-container)
 * [Running the pipeline](#running-the-pipeline)
    * [Prediction](#prediction)
@@ -165,7 +166,20 @@ https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/releases as follow
 They will be extracted to `CNN-Diffusion-MRIBrain-Segmentation/model_folder` directory.
 
 
-## 6. mrtrix
+## 6. Run script
+
+To avoid the need for setting `LD_LIBRARY_PATH` and providing Python interpreter every time `dwi_masking.py` is run,
+we wrote a run script `dwi_masking.sh`. If you would like, you can configure it for your environment as:
+
+```
+cd CNN-Diffusion-MRIBrain-Segmentation/pipeline
+sed -i "s+PREFIX+${CONDA_PREFIX}+g" dwi_masking.sh
+```
+
+Afterward, you can use `dwi_masking.sh` instead of `dwi_masking.py` in all the examples shown in this manual.
+
+
+## 7. mrtrix
 
 This software makes use of only one binary from mrtrix, `maskfilter`. If you already have mrtrix installed on your 
 system, you can use it. Moreover, you can follow [this](https://mrtrix.readthedocs.io/en/latest/installation/linux_install.html) instruction to install mrtrix.
@@ -175,7 +189,7 @@ use a Python translated version of the above binary.
 See [Clean up](#3-clean-up) for details.
 
 
-## 7. FSL
+## 8. FSL
 
 This software marginally depends on FSL in the sense that you need FSL's `slicesdir` executable
 to generate snapshots of image-mask for being able to QC it. Hence, we do not recommend
