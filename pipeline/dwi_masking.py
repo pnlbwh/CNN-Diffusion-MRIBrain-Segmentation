@@ -600,7 +600,10 @@ or MRtrix3 maskfilter (mrtrix)''')
             unique = TXT_file[:len(TXT_file) - (len(SUFFIX_TXT) + 1)]
             storage = path.dirname(case_arr[0])
             tmp_path = storage + '/'
-            trained_model_folder = args.model_folder.rstrip('/')
+            if not args.model_folder:
+                trained_model_folder = path.abspath(path.dirname(__file__)+'/../model_folder')
+            else:
+                trained_model_folder = args.model_folder
             reference = trained_model_folder + '/IITmean_b0_256.nii.gz'
 
             binary_file_s = storage + '/' + unique + '_' + str(os.getpid()) + '_binary_s'
