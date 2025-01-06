@@ -110,12 +110,13 @@ In 2024, we recommend the below step-by-step instructions to build an environmen
 Step-by-step instructions:
 
 ```
-conda create -y -n dmri_seg python=3.9
+conda create -y -n dmri_seg python=3.11 --override-channels
 conda activate dmri_seg
-pip install tensorflow==2.11
-conda install -y anaconda::cudnn conda-forge::gputil
-pip install nibabel scikit-image git+https://github.com/pnlbwh/conversion.git
+pip install 'tensorflow[and-cuda]==2.15.1'
+pip install scikit-image gputil git+https://github.com/pnlbwh/conversion.git
 ```
+
+Tensorflow installation is inspired by https://www.tensorflow.org/install/pip.
 
 ## 3. ANTs
 
