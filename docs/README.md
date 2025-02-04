@@ -63,11 +63,8 @@ If you use this software, please cite all of the following:
 * Palanivelu S, Cetin Karayumak S, Billah T, Zurrin E R, Bouix S, Rathi Y; CNN based diffusion MRI brain segmentation tool, 
 https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation, 2020, DOI: 10.5281/zenodo.3665739
 
-* Dey, Raunak, and Yi Hong. "CompNet: Complementary segmentation network for brain MRI extraction." 
-International Conference on Medical Image Computing and Computer-Assisted Intervention. Springer, Cham, 2018.
-
-* Roy, Abhijit Guha, et al. "QuickNAT: A fully convolutional network for quick and accurate segmentation of neuroanatomy." 
-NeuroImage 186 (2019): 713-727.
+* Cetin-Karayumak, S., Zhang, F., Zurrin, R. et al. Harmonized diffusion MRI data and white matter measures from the
+Adolescent Brain Cognitive Development Study. Sci Data 11, 249 (2024). https://doi.org/10.1038/s41597-024-03058-w
 
 
 # Dependencies
