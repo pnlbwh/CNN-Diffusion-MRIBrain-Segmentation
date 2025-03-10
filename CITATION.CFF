@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If this repository is useful in your research, please cite as below:"
+authors:
+- family-names: "Palanivelu"
+  given-names: "Senthil"
+- family-names: "Cetin Karayumak"
+  given-names: "Suheyla"
+- family-names: "Billah"
+  given-names: "Tashrif"
+- family-names: "Zurrin"
+  given-names: "Ryan Edwin"
+- family-names: "Bouix"
+  given-names: "Sylvain"
+- family-names: "Rathi"
+  given-names: "Yogesh"
+title: "CNN based diffusion MRI brain segmentation tool"
+version: 1.0
+doi: 10.5281/zenodo.3665739
+date-released: 2024-09-23
+url: "https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation"
