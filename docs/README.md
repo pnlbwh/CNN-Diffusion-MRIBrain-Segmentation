@@ -60,7 +60,7 @@ from a dMRI b0 volume.
 
 If you use this software, please cite all of the following:
 
-* Palanivelu S, Cetin Karayumak S, Billah T, Zurrin E R, Bouix S, Rathi Y; CNN based diffusion MRI brain segmentation tool, 
+* Palanivelu, S., Cetin Karayumak, S., Billah, T., Zurrin, R., Bouix, S., Rathi, Y.; CNN based diffusion MRI brain segmentation tool, 
 https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation, 2020, DOI: 10.5281/zenodo.3665739
 
 * Cetin-Karayumak, S., Zhang, F., Zurrin, R. et al. Harmonized diffusion MRI data and white matter measures from the
