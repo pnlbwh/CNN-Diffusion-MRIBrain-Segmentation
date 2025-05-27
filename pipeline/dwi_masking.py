@@ -39,10 +39,8 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
 # Get the first available GPU
 try:
-    import GPUtil
-
-    DEVICE_ID_LIST = [g.id for g in GPUtil.getGPUs()]
-    DEVICE_ID = DEVICE_ID_LIST[0]
+    # it is safe to assume that the first GPU ID is 0
+    DEVICE_ID = 0
 
     CUDA_VISIBLE_DEVICES = os.getenv('CUDA_VISIBLE_DEVICES')
     if CUDA_VISIBLE_DEVICES:
