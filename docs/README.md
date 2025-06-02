@@ -110,7 +110,7 @@ Step-by-step instructions:
 conda create -y -n dmri_seg python=3.11 -c conda-forge --override-channels
 conda activate dmri_seg
 pip install 'tensorflow[and-cuda]==2.15.1'
-pip install scikit-image gputil git+https://github.com/pnlbwh/conversion.git
+pip install scikit-image git+https://github.com/pnlbwh/conversion.git
 ```
 
 Tensorflow installation is inspired by https://www.tensorflow.org/install/pip.
