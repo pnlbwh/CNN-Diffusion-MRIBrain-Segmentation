@@ -224,6 +224,16 @@ you can download and use the it as follows:
     dwi_masking.py -i /data/dwi_list.txt -f /home/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/model_folder
 
 
+For GPU support, use the `--nv` flag. You must have NVIDIA driver installed in your host computer.
+
+    singularity run \
+    --nv \
+    --bind /path/to/data:/data \
+    --bind model_folder:/home/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/model_folder \
+    dmri_seg.sif \
+    dwi_masking.py -i /data/dwi_list.txt -f /home/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation/model_folder
+
+
 Please continue reading below to learn more about `dwi_list.txt`. Also note that, the container supports only `-filter scipy` option.
     
 
